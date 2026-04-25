@@ -1,5 +1,9 @@
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+const BASE_HEADERS: Record<string, string> = {
+  "ngrok-skip-browser-warning": "1",
+};
+
 export interface CarInfo {
   id: number;
   waited_sec: number;
@@ -35,23 +39,23 @@ export interface SimConfig {
 }
 
 export async function fetchStats(): Promise<QueueStats> {
-  const res = await fetch(`${API}/api/stats`, { cache: "no-store" });
+  const res = await fetch(`${API}/api/stats`, { cache: "no-store", headers: BASE_HEADERS });
   if (!res.ok) throw new Error("Failed to fetch stats");
   return res.json();
 }
 
 export async function spawnCar(): Promise<void> {
-  await fetch(`${API}/api/spawn`, { method: "POST" });
+  await fetch(`${API}/api/spawn`, { method: "POST", headers: BASE_HEADERS });
 }
 
 export async function joinQueue(): Promise<{ car_id: number }> {
-  const res = await fetch(`${API}/api/join`, { method: "POST" });
+  const res = await fetch(`${API}/api/join`, { method: "POST", headers: BASE_HEADERS });
   if (!res.ok) throw new Error("Failed to join queue");
   return res.json();
 }
 
 export async function fetchConfig(): Promise<SimConfig> {
-  const res = await fetch(`${API}/api/config`, { cache: "no-store" });
+  const res = await fetch(`${API}/api/config`, { cache: "no-store", headers: BASE_HEADERS });
   if (!res.ok) throw new Error("Failed to fetch config");
   return res.json();
 }
@@ -59,7 +63,7 @@ export async function fetchConfig(): Promise<SimConfig> {
 export async function updateConfig(config: SimConfig): Promise<SimConfig> {
   const res = await fetch(`${API}/api/config`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...BASE_HEADERS, "Content-Type": "application/json" },
     body: JSON.stringify(config),
   });
   if (!res.ok) throw new Error("Failed to update config");
