@@ -5,16 +5,25 @@ import ConfigPanel from "@/components/ConfigPanel";
 import SimulationLane from "@/components/SimulationLane";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 import StatsCard from "@/components/StatsCard";
-import { fetchStats, spawnCar, QueueStats } from "@/lib/api";
+import { controlSimulation, fetchStats, QueueStats } from "@/lib/api";
 
 function fmt(sec: number): string {
   if (sec < 60) return `${Math.round(sec)}s`;
   return `${Math.floor(sec / 60)}m ${Math.round(sec % 60)}s`;
 }
 
+const btnBase: React.CSSProperties = {
+  border: "none",
+  borderRadius: 8,
+  padding: "9px 16px",
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer",
+  transition: "background 0.15s",
+};
+
 export default function Home() {
   const [stats, setStats] = useState<QueueStats | null>(null);
-  const [spawning, setSpawning] = useState(false);
 
   useEffect(() => {
     const load = () => fetchStats().then(setStats).catch(() => {});
@@ -23,11 +32,14 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  const handleSpawn = useCallback(async () => {
-    setSpawning(true);
-    await spawnCar().catch(() => {});
-    setTimeout(() => setSpawning(false), 300);
-  }, []);
+  const paused = stats?.paused ?? false;
+
+  const handleControl = useCallback(
+    (action: "pause" | "resume" | "reset") => () => {
+      controlSimulation(action).catch(() => {});
+    },
+    []
+  );
 
   const s = stats;
 
@@ -44,7 +56,7 @@ export default function Home() {
       }}
     >
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div>
           <div
             style={{
@@ -58,26 +70,32 @@ export default function Home() {
             AutoWash
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: "#f9fafb", marginTop: 2 }}>
-            Queue Simulator
+            Eiles simuliatorius
           </h1>
         </div>
-        <button
-          onClick={handleSpawn}
-          disabled={spawning}
-          style={{
-            background: spawning ? "#1e3a8a" : "#2563eb",
-            color: "#fff",
-            border: "none",
-            borderRadius: 10,
-            padding: "10px 20px",
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: spawning ? "default" : "pointer",
-            transition: "background 0.15s",
-          }}
-        >
-          + Spawn Car
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          {paused ? (
+            <button
+              onClick={handleControl("resume")}
+              style={{ ...btnBase, background: "#065f46", color: "#6ee7b7" }}
+            >
+              ▶ Testi
+            </button>
+          ) : (
+            <button
+              onClick={handleControl("pause")}
+              style={{ ...btnBase, background: "#1e3a8a", color: "#93c5fd" }}
+            >
+              ⏸ Stabdyti
+            </button>
+          )}
+          <button
+            onClick={handleControl("reset")}
+            style={{ ...btnBase, background: "#1c1917", color: "#78716c", border: "1px solid #292524" }}
+          >
+            ↺ Is naujo
+          </button>
+        </div>
       </div>
 
       {/* Two-column layout */}
@@ -87,6 +105,7 @@ export default function Home() {
           gridTemplateColumns: "260px 1fr",
           gap: 16,
           alignItems: "start",
+          minWidth: 0,
         }}
       >
         {/* Left: config + QR */}
@@ -107,15 +126,15 @@ export default function Home() {
           >
             <QRCodeDisplay />
             <p style={{ color: "#374151", fontSize: 11, textAlign: "center", lineHeight: 1.4 }}>
-              Scan to join queue
+              Nuskenuokite, kad prisijungtumete
               <br />
-              and track your car
+              prie eiles ir sekite savo automobili
             </p>
           </div>
         </div>
 
         {/* Right: simulation + stats */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
           {/* Simulation lane */}
           <div
             style={{
@@ -134,7 +153,7 @@ export default function Home() {
                 marginBottom: 8,
               }}
             >
-              Live Queue — cars enter from right →
+              {paused ? "⏸ Eile sustabdyta" : "Gyva eile — automobiliai atvyksta is desines →"}
             </div>
             <SimulationLane
               queueCars={s?.queue_cars ?? []}
@@ -156,8 +175,8 @@ export default function Home() {
           >
             {[
               {
-                label: "Waiting",
-                val: `${s?.queue_length ?? 0} cars`,
+                label: "Laukia",
+                val: `${s?.queue_length ?? 0} aut.`,
                 color:
                   (s?.queue_length ?? 0) > 4
                     ? "#ef4444"
@@ -166,18 +185,18 @@ export default function Home() {
                     : "#10b981",
               },
               {
-                label: "Bay",
-                val: s?.is_serving ? "Washing" : "Available",
+                label: "Boksas",
+                val: s?.is_serving ? "Plaunama" : "Laisvas",
                 color: s?.is_serving ? "#22c55e" : "#f59e0b",
               },
               {
-                label: "Served",
+                label: "Aptarnautas",
                 val: `${s?.cars_served_total ?? 0}`,
                 color: "#f9fafb",
               },
               {
-                label: "Throughput",
-                val: s ? `${s.throughput_per_hour}/hr` : "—",
+                label: "Pralaidumas",
+                val: s ? `${s.throughput_per_hour}/val.` : "—",
                 color: "#94a3b8",
               },
             ].map((item, i, arr) => (
@@ -217,11 +236,11 @@ export default function Home() {
               gap: 10,
             }}
           >
-            <StatsCard label="Est. next wait" value={s ? fmt(s.estimated_wait_sec) : "—"} />
-            <StatsCard label="Avg wash time" value={s ? fmt(s.avg_service_time_sec) : "—"} />
-            <StatsCard label="Avg queue wait" value={s ? fmt(s.avg_wait_time_sec) : "—"} />
+            <StatsCard label="Apytiksl. laukimas" value={s ? fmt(s.estimated_wait_sec) : "—"} />
+            <StatsCard label="Vid. plovimo laikas" value={s ? fmt(s.avg_service_time_sec) : "—"} />
+            <StatsCard label="Vid. eiles laukimas" value={s ? fmt(s.avg_wait_time_sec) : "—"} />
             <StatsCard
-              label="Utilization"
+              label="Apkrovimas"
               value={s ? `${Math.round(s.utilization * 100)}` : "—"}
               unit="%"
             />

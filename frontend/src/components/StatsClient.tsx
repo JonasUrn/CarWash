@@ -56,7 +56,7 @@ export default function StatsClient() {
           padding: 24,
         }}
       >
-        <p style={{ color: "#9ca3af" }}>Unable to connect to car wash system.</p>
+        <p style={{ color: "#9ca3af" }}>Nepavyko prisijungti prie plovyklos sistemos.</p>
       </main>
     );
   }
@@ -72,7 +72,7 @@ export default function StatsClient() {
           padding: 24,
         }}
       >
-        <p style={{ color: "#6b7280" }}>Connecting...</p>
+        <p style={{ color: "#6b7280" }}>Jungiamasi...</p>
       </main>
     );
   }
@@ -107,10 +107,10 @@ export default function StatsClient() {
           AutoWash
         </div>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "#f9fafb" }}>
-          {carId ? "Your Queue Status" : "Queue Status"}
+          {carId ? "Jusu eiles busena" : "Eiles busena"}
         </h1>
         <p style={{ color: "#4b5563", fontSize: 12, marginTop: 4 }}>
-          Updates every 1.5 seconds
+          Atnaujinama kas 1.5 sek.
         </p>
       </div>
 
@@ -135,19 +135,19 @@ export default function StatsClient() {
           {phase === "done" ? (
             <>
               <div style={{ color: "#6ee7b7", fontWeight: 700, fontSize: 18 }}>
-                Your car is clean! 🎉
+                Jusu automobilis svarus! 🎉
               </div>
               <div style={{ color: "#34d399", fontSize: 13, marginTop: 4 }}>
-                Wash complete — enjoy!
+                Plovimas baigtas!
               </div>
             </>
           ) : phase === "serving" ? (
             <>
               <div style={{ color: "#93c5fd", fontWeight: 700, fontSize: 18 }}>
-                Your car is being washed
+                Jusu automobilis plaunamas
               </div>
               <div style={{ color: "#60a5fa", fontSize: 13, marginTop: 4 }}>
-                Est. remaining: {fmt(stats.remaining_sec)}
+                Liko: {fmt(stats.remaining_sec)}
               </div>
               <div
                 style={{
@@ -171,16 +171,16 @@ export default function StatsClient() {
           ) : (
             <>
               <div style={{ color: "#f9fafb", fontWeight: 700, fontSize: 18 }}>
-                {myIdx >= 0 ? `#${myIdx + 1} in queue` : "Waiting to enter queue..."}
+                {myIdx >= 0 ? `#${myIdx + 1} eileje` : "Laukiama..."}
               </div>
               {myWait !== null && (
                 <div style={{ color: "#9ca3af", fontSize: 13, marginTop: 4 }}>
-                  Est. wait: {fmt(myWait)}
+                  Apytiksl. laukimas: {fmt(myWait)}
                 </div>
               )}
               {myCarInQueue && (
                 <div style={{ color: "#4b5563", fontSize: 12, marginTop: 2 }}>
-                  In queue for: {fmt(myCarInQueue.waited_sec)}
+                  Eile jau: {fmt(myCarInQueue.waited_sec)}
                 </div>
               )}
             </>
@@ -192,22 +192,22 @@ export default function StatsClient() {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {!carId && (
           <StatsCard
-            label="Position if joining now"
-            value={genericPosition === 0 ? "Next!" : `~${genericPosition + 1}`}
-            unit={genericPosition > 0 ? "in line" : undefined}
+            label="Vieta prisijungus dabar"
+            value={genericPosition === 0 ? "Pirmas!" : `~${genericPosition + 1}`}
+            unit={genericPosition > 0 ? "eileje" : undefined}
             highlight
           />
         )}
-        <StatsCard label="Est. wait for new car" value={fmt(stats.estimated_wait_sec)} />
-        <StatsCard label="Avg wash time" value={fmt(stats.avg_service_time_sec)} />
-        <StatsCard label="Avg queue wait" value={fmt(stats.avg_wait_time_sec)} />
+        <StatsCard label="Apytiksl. laukimas" value={fmt(stats.estimated_wait_sec)} />
+        <StatsCard label="Vid. plovimo laikas" value={fmt(stats.avg_service_time_sec)} />
+        <StatsCard label="Vid. eiles laukimas" value={fmt(stats.avg_wait_time_sec)} />
         <StatsCard
-          label="Utilization"
+          label="Apkrovimas"
           value={`${Math.round(stats.utilization * 100)}`}
           unit="%"
         />
-        <StatsCard label="Throughput" value={`${stats.throughput_per_hour}`} unit="/hr" />
-        <StatsCard label="Cars served" value={`${stats.cars_served_total}`} />
+        <StatsCard label="Pralaidumas" value={`${stats.throughput_per_hour}`} unit="/val." />
+        <StatsCard label="Aptarnauti automobiliai" value={`${stats.cars_served_total}`} />
       </div>
 
       {/* Bay pill */}
@@ -233,7 +233,7 @@ export default function StatsClient() {
           }}
         />
         <span style={{ color: "#6b7280", fontSize: 13 }}>
-          {stats.is_serving ? "Currently washing a car" : "Bay is available"}
+          {stats.is_serving ? "Dabar plaunamas automobilis" : "Boksas laisvas"}
         </span>
       </div>
     </main>

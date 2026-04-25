@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { fetchConfig, SimConfig, updateConfig } from "@/lib/api";
 
-const DISTS = ["constant", "exponential", "triangular"] as const;
+const DISTS = [
+  { value: "constant", label: "Past." },
+  { value: "exponential", label: "Ekspon." },
+  { value: "triangular", label: "Trikamp." },
+] as const;
 
 function NumInput({
   value,
@@ -43,34 +47,81 @@ function NumInput({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        marginBottom: 10,
-      }}
-    >
-      <span style={{ color: "#6b7280", fontSize: 12, minWidth: 80 }}>{label}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+      <span style={{ color: "#6b7280", fontSize: 12, minWidth: 72 }}>{label}</span>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>{children}</div>
     </div>
   );
 }
 
-const unit = (s: string) => (
-  <span style={{ color: "#374151", fontSize: 12 }}>{s}</span>
-);
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        color: "#4b5563",
+        fontSize: 10,
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        marginBottom: 8,
+        marginTop: 4,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DistButtons({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: "constant" | "exponential" | "triangular") => void;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 5, marginBottom: 8 }}>
+      {DISTS.map((d) => (
+        <button
+          key={d.value}
+          onClick={() => onChange(d.value)}
+          style={{
+            flex: 1,
+            padding: "4px 6px",
+            borderRadius: 6,
+            border: "1px solid",
+            borderColor: value === d.value ? "#2563eb" : "#1f2937",
+            background: value === d.value ? "#1e3a8a" : "transparent",
+            color: value === d.value ? "#93c5fd" : "#4b5563",
+            fontSize: 11,
+            cursor: "pointer",
+          }}
+        >
+          {d.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const unit = (s: string) => <span style={{ color: "#374151", fontSize: 12 }}>{s}</span>;
+
+const DEFAULT_CFG: SimConfig = {
+  dist_iat: "exponential",
+  mean_iat_sec: 7,
+  constant_iat_sec: 7,
+  min_iat_sec: 3,
+  mode_iat_sec: 7,
+  max_iat_sec: 15,
+  distribution: "exponential",
+  constant_sec: 5,
+  mean_sec: 5,
+  min_sec: 3,
+  mode_sec: 5,
+  max_sec: 10,
+};
 
 export default function ConfigPanel() {
-  const [cfg, setCfg] = useState<SimConfig>({
-    mean_iat_sec: 7,
-    distribution: "exponential",
-    constant_sec: 5,
-    mean_sec: 5,
-    min_sec: 3,
-    mode_sec: 5,
-    max_sec: 10,
-  });
+  const [cfg, setCfg] = useState<SimConfig>(DEFAULT_CFG);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -101,84 +152,81 @@ export default function ConfigPanel() {
           fontSize: 10,
           textTransform: "uppercase",
           letterSpacing: "0.12em",
-          marginBottom: 14,
+          marginBottom: 12,
         }}
       >
-        Parameters
+        Parametrai
       </div>
 
-      <Row label="Arrival gap">
-        <NumInput
-          value={cfg.mean_iat_sec}
-          onChange={(v) => set("mean_iat_sec", v)}
-          min={1}
-          max={120}
-        />
-        {unit("sec mean")}
-      </Row>
+      {/* Arrival section */}
+      <SectionLabel>Atvykimas</SectionLabel>
+      <DistButtons
+        value={cfg.dist_iat}
+        onChange={(v) => set("dist_iat", v)}
+      />
+      {cfg.dist_iat === "constant" && (
+        <Row label="Trukme">
+          <NumInput value={cfg.constant_iat_sec} onChange={(v) => set("constant_iat_sec", v)} min={1} max={300} />
+          {unit("sek.")}
+        </Row>
+      )}
+      {cfg.dist_iat === "exponential" && (
+        <Row label="Vidurkis">
+          <NumInput value={cfg.mean_iat_sec} onChange={(v) => set("mean_iat_sec", v)} min={1} max={120} />
+          {unit("sek.")}
+        </Row>
+      )}
+      {cfg.dist_iat === "triangular" && (
+        <>
+          <Row label="Min">
+            <NumInput value={cfg.min_iat_sec} onChange={(v) => set("min_iat_sec", v)} min={0.5} max={300} />
+            {unit("sek.")}
+          </Row>
+          <Row label="Moda">
+            <NumInput value={cfg.mode_iat_sec} onChange={(v) => set("mode_iat_sec", v)} min={0.5} max={300} />
+            {unit("sek.")}
+          </Row>
+          <Row label="Maks">
+            <NumInput value={cfg.max_iat_sec} onChange={(v) => set("max_iat_sec", v)} min={0.5} max={300} />
+            {unit("sek.")}
+          </Row>
+        </>
+      )}
 
-      <div style={{ marginBottom: 10 }}>
-        <span style={{ color: "#6b7280", fontSize: 12 }}>Service dist.</span>
-        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-          {DISTS.map((d) => (
-            <button
-              key={d}
-              onClick={() => set("distribution", d)}
-              style={{
-                padding: "4px 10px",
-                borderRadius: 6,
-                border: "1px solid",
-                borderColor: cfg.distribution === d ? "#2563eb" : "#1f2937",
-                background: cfg.distribution === d ? "#1e3a8a" : "transparent",
-                color: cfg.distribution === d ? "#93c5fd" : "#4b5563",
-                fontSize: 11,
-                cursor: "pointer",
-                textTransform: "capitalize",
-              }}
-            >
-              {d}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Divider */}
+      <div style={{ borderTop: "1px solid #1f2937", margin: "10px 0" }} />
 
+      {/* Service section */}
+      <SectionLabel>Aptarnavimas</SectionLabel>
+      <DistButtons
+        value={cfg.distribution}
+        onChange={(v) => set("distribution", v)}
+      />
       {cfg.distribution === "constant" && (
-        <Row label="Duration">
-          <NumInput
-            value={cfg.constant_sec}
-            onChange={(v) => set("constant_sec", v)}
-            min={1}
-            max={300}
-          />
-          {unit("sec")}
+        <Row label="Trukme">
+          <NumInput value={cfg.constant_sec} onChange={(v) => set("constant_sec", v)} min={1} max={300} />
+          {unit("sek.")}
         </Row>
       )}
-
       {cfg.distribution === "exponential" && (
-        <Row label="Mean">
-          <NumInput
-            value={cfg.mean_sec}
-            onChange={(v) => set("mean_sec", v)}
-            min={1}
-            max={300}
-          />
-          {unit("sec")}
+        <Row label="Vidurkis">
+          <NumInput value={cfg.mean_sec} onChange={(v) => set("mean_sec", v)} min={1} max={300} />
+          {unit("sek.")}
         </Row>
       )}
-
       {cfg.distribution === "triangular" && (
         <>
           <Row label="Min">
             <NumInput value={cfg.min_sec} onChange={(v) => set("min_sec", v)} min={0.5} max={300} />
-            {unit("sec")}
+            {unit("sek.")}
           </Row>
-          <Row label="Mode">
+          <Row label="Moda">
             <NumInput value={cfg.mode_sec} onChange={(v) => set("mode_sec", v)} min={0.5} max={300} />
-            {unit("sec")}
+            {unit("sek.")}
           </Row>
-          <Row label="Max">
+          <Row label="Maks">
             <NumInput value={cfg.max_sec} onChange={(v) => set("max_sec", v)} min={0.5} max={300} />
-            {unit("sec")}
+            {unit("sek.")}
           </Row>
         </>
       )}
@@ -186,7 +234,7 @@ export default function ConfigPanel() {
       <button
         onClick={apply}
         style={{
-          marginTop: 4,
+          marginTop: 8,
           width: "100%",
           padding: "9px",
           background: saved ? "#064e3b" : "#1e3a8a",
@@ -199,7 +247,7 @@ export default function ConfigPanel() {
           transition: "all 0.2s",
         }}
       >
-        {saved ? "✓ Applied" : "Apply"}
+        {saved ? "✓ Pritaikyta" : "Taikyti"}
       </button>
     </div>
   );

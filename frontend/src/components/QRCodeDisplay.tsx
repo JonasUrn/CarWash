@@ -1,7 +1,5 @@
 "use client";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
 export default function QRCodeDisplay() {
   return (
     <div
@@ -14,8 +12,8 @@ export default function QRCodeDisplay() {
       }}
     >
       <img
-        src={`${API}/api/qr`}
-        alt="Scan for queue status"
+        src="/api/qr"
+        alt="QR kodas"
         width={160}
         height={160}
         style={{ display: "block" }}

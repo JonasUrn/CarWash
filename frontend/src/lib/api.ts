@@ -26,10 +26,16 @@ export interface QueueStats {
   estimated_wait_sec: number;
   cars_served_total: number;
   throughput_per_hour: number;
+  paused: boolean;
 }
 
 export interface SimConfig {
+  dist_iat: "constant" | "exponential" | "triangular";
   mean_iat_sec: number;
+  constant_iat_sec: number;
+  min_iat_sec: number;
+  mode_iat_sec: number;
+  max_iat_sec: number;
   distribution: "constant" | "exponential" | "triangular";
   constant_sec: number;
   mean_sec: number;
@@ -42,10 +48,6 @@ export async function fetchStats(): Promise<QueueStats> {
   const res = await fetch(`${API}/api/stats`, { cache: "no-store", headers: BASE_HEADERS });
   if (!res.ok) throw new Error("Failed to fetch stats");
   return res.json();
-}
-
-export async function spawnCar(): Promise<void> {
-  await fetch(`${API}/api/spawn`, { method: "POST", headers: BASE_HEADERS });
 }
 
 export async function joinQueue(): Promise<{ car_id: number }> {
@@ -68,4 +70,12 @@ export async function updateConfig(config: SimConfig): Promise<SimConfig> {
   });
   if (!res.ok) throw new Error("Failed to update config");
   return res.json();
+}
+
+export async function controlSimulation(action: "pause" | "resume" | "reset"): Promise<void> {
+  await fetch(`${API}/api/control`, {
+    method: "POST",
+    headers: { ...BASE_HEADERS, "Content-Type": "application/json" },
+    body: JSON.stringify({ action }),
+  });
 }

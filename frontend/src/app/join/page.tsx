@@ -7,14 +7,14 @@ import { joinQueue } from "@/lib/api";
 export default function JoinPage() {
   const router = useRouter();
   const done = useRef(false);
-  const [msg, setMsg] = useState("Joining the queue...");
+  const [msg, setMsg] = useState("Prisijungiama prie eiles...");
 
   useEffect(() => {
     if (done.current) return;
     done.current = true;
     joinQueue()
       .then(({ car_id }) => router.replace(`/stats?car_id=${car_id}`))
-      .catch(() => setMsg("Could not connect to the car wash system."));
+      .catch(() => setMsg("Nepavyko prisijungti prie plovyklos sistemos."));
   }, [router]);
 
   return (

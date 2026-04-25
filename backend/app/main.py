@@ -5,9 +5,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from app.models import JoinResponse, QueueStats, SimConfigIn, SimConfigOut
+from app.models import ControlAction, JoinResponse, QueueStats, SimConfigIn, SimConfigOut
 from app.qr_gen import make_qr_png
-from app.simulation import get_config, get_stats, request_spawn, start_simulation, update_config
+from app.simulation import (
+    get_config, get_stats, pause_simulation, request_spawn,
+    reset_simulation, resume_simulation, start_simulation, update_config,
+)
 
 app = FastAPI(title="CarWash Simulator v2")
 
@@ -54,6 +57,17 @@ def get_sim_config():
 def set_sim_config(body: SimConfigIn):
     update_config(**{k: v for k, v in body.model_dump().items() if v is not None})
     return asdict(get_config())
+
+
+@app.post("/api/control")
+def control(body: ControlAction):
+    if body.action == "pause":
+        pause_simulation()
+    elif body.action == "resume":
+        resume_simulation()
+    elif body.action == "reset":
+        reset_simulation()
+    return {"ok": True}
 
 
 @app.get("/api/qr")

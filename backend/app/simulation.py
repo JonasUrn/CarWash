@@ -1,4 +1,3 @@
-import os
 import threading
 import time
 import random
@@ -11,6 +10,8 @@ import simpy.rt
 
 _car_counter = 0
 _spawn_requests: deque = deque()
+_paused = threading.Event()
+_generation = 0
 
 
 @dataclass
@@ -21,7 +22,12 @@ class Car:
 
 @dataclass
 class SimConfig:
+    dist_iat: str = "exponential"
     mean_iat_sec: float = 7.0
+    constant_iat_sec: float = 7.0
+    min_iat_sec: float = 3.0
+    mode_iat_sec: float = 7.0
+    max_iat_sec: float = 15.0
     distribution: str = "exponential"
     constant_sec: float = 5.0
     mean_sec: float = 5.0
@@ -80,31 +86,49 @@ def _sample_svc() -> float:
     return random.expovariate(1 / m)
 
 
-def _iat() -> float:
+def _sample_iat() -> float:
     with _config_lock:
-        mean = _config.mean_iat_sec
-    return random.expovariate(1 / mean)
+        dist = _config.dist_iat
+        c = _config.constant_iat_sec
+        m = _config.mean_iat_sec
+        lo, mo, hi = _config.min_iat_sec, _config.mode_iat_sec, _config.max_iat_sec
+    if dist == "constant":
+        return c
+    if dist == "triangular":
+        return random.triangular(lo, hi, mo)
+    return random.expovariate(1 / m)
 
 
-def _arrivals(env: simpy.Environment, resource: simpy.Resource):
-    remaining = _iat()
-    while True:
+def _arrivals(env: simpy.Environment, resource: simpy.Resource, gen: int):
+    remaining = _sample_iat()
+    while gen == _generation:
         step = min(0.2, remaining)
         yield env.timeout(step)
-        remaining -= step
+        if gen != _generation:
+            return
         while _spawn_requests:
-            env.process(_serve(env, resource, _spawn_requests.popleft()))
-        if remaining <= 0:
-            env.process(_serve(env, resource, _next_id()))
-            remaining = _iat()
+            env.process(_serve(env, resource, _spawn_requests.popleft(), gen))
+        if not _paused.is_set():
+            remaining -= step
+            if remaining <= 0:
+                env.process(_serve(env, resource, _next_id(), gen))
+                remaining = _sample_iat()
 
 
-def _serve(env: simpy.Environment, resource: simpy.Resource, car_id: int):
+def _serve(env: simpy.Environment, resource: simpy.Resource, car_id: int, gen: int):
+    if gen != _generation:
+        return
     car = Car(id=car_id, real_arrived=time.time())
     with _state.lock:
+        if gen != _generation:
+            return
         _state.queue.append(car)
     with resource.request() as req:
         yield req
+        if gen != _generation:
+            with _state.lock:
+                _state.queue = [c for c in _state.queue if c.id != car.id]
+            return
         wait = time.time() - car.real_arrived
         duration = _sample_svc()
         with _state.lock:
@@ -128,12 +152,33 @@ def request_spawn() -> int:
     return car_id
 
 
+def pause_simulation():
+    _paused.set()
+
+
+def resume_simulation():
+    _paused.clear()
+
+
+def reset_simulation():
+    global _car_counter, _state, _generation
+    _generation += 1
+    _paused.clear()
+    _car_counter = 0
+    _state = _State()
+    _spawn_requests.clear()
+    start_simulation()
+
+
 def start_simulation():
+    gen = _generation
+
     def _run():
         env = simpy.rt.RealtimeEnvironment(factor=1.0, strict=False)
         resource = simpy.Resource(env, capacity=1)
-        env.process(_arrivals(env, resource))
+        env.process(_arrivals(env, resource, gen))
         env.run()
+
     threading.Thread(target=_run, daemon=True).start()
 
 
@@ -182,4 +227,5 @@ def get_stats() -> dict:
         "estimated_wait_sec": round(len(queue_snap) * avg_svc + remaining, 1),
         "cars_served_total": cars,
         "throughput_per_hour": round(throughput, 1),
+        "paused": _paused.is_set(),
     }

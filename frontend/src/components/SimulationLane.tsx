@@ -16,6 +16,7 @@ const CAR_W = 60;
 const CAR_H = 30;
 const GAP = 10;
 const LANE_H = 130;
+const MAX_VISIBLE = 8;
 
 function MiniCar({ color = "#2563eb", highlight = false }: { color?: string; highlight?: boolean }) {
   return (
@@ -70,7 +71,9 @@ export default function SimulationLane({
   const selectedWait =
     selectedIdx >= 0 ? remainingSec + selectedIdx * avgServiceTimeSec : null;
 
-  const contentWidth = BAY_W + 16 + queueCars.length * (CAR_W + GAP) + 48;
+  const visibleCars = queueCars.slice(0, MAX_VISIBLE);
+  const overflowCount = queueCars.length - MAX_VISIBLE;
+  const contentWidth = BAY_W + 16 + visibleCars.length * (CAR_W + GAP) + (overflowCount > 0 ? 56 : 32);
 
   return (
     <div>
@@ -88,13 +91,13 @@ export default function SimulationLane({
         {selectedCar && selectedWait !== null ? (
           <>
             <span style={{ color: "#fbbf24", fontSize: 12, fontWeight: 600 }}>
-              Car #{selectedIdx + 1}
+              Aut. #{selectedIdx + 1}
             </span>
             <span style={{ color: "#64748b", fontSize: 12 }}>
-              Waited: {fmt(selectedCar.waited_sec)}
+              Lauke: {fmt(selectedCar.waited_sec)}
             </span>
             <span style={{ color: "#64748b", fontSize: 12 }}>
-              Est. wait: {fmt(selectedWait)}
+              Liks: {fmt(selectedWait)}
             </span>
             <button
               onClick={() => setSelectedId(null)}
@@ -112,11 +115,11 @@ export default function SimulationLane({
           </>
         ) : servingCar && selectedId === servingCar.id ? (
           <span style={{ color: "#22c55e", fontSize: 12, fontWeight: 600 }}>
-            Your car is being washed!
+            Jusu automobilis plaunamas!
           </span>
         ) : (
           <span style={{ color: "#1e293b", fontSize: 12 }}>
-            Click a car to see its wait time
+            Paspauskite ant automobilio
           </span>
         )}
       </div>
@@ -184,7 +187,7 @@ export default function SimulationLane({
                 textTransform: "uppercase",
               }}
             >
-              Wash Bay
+              Plovykla
             </span>
 
             {servingCar ? (
@@ -241,13 +244,13 @@ export default function SimulationLane({
                   justifyContent: "center",
                 }}
               >
-                <span style={{ color: "#1a2236", fontSize: 10 }}>free</span>
+                <span style={{ color: "#1a2236", fontSize: 10 }}>laisva</span>
               </div>
             )}
           </div>
 
-          {/* Queue cars */}
-          {queueCars.map((car, i) => {
+          {/* Queue cars (capped at MAX_VISIBLE) */}
+          {visibleCars.map((car, i) => {
             const left = BAY_W + 16 + i * (CAR_W + GAP);
             const isNew = newIds.has(car.id);
             const isSelected = selectedId === car.id;
@@ -284,6 +287,26 @@ export default function SimulationLane({
               </div>
             );
           })}
+
+          {/* Overflow badge */}
+          {overflowCount > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                left: BAY_W + 16 + visibleCars.length * (CAR_W + GAP) + 4,
+                bottom: 14,
+                background: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: 6,
+                padding: "4px 8px",
+                color: "#64748b",
+                fontSize: 11,
+                fontWeight: 600,
+              }}
+            >
+              +{overflowCount}
+            </div>
+          )}
 
           {/* Entrance arrow */}
           <div
