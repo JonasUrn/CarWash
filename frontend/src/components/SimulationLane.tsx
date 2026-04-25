@@ -91,7 +91,7 @@ export default function SimulationLane({
         {selectedCar && selectedWait !== null ? (
           <>
             <span style={{ color: "#fbbf24", fontSize: 12, fontWeight: 600 }}>
-              Aut. #{selectedIdx + 1}
+              Masinu #{selectedIdx + 1}
             </span>
             <span style={{ color: "#64748b", fontSize: 12 }}>
               Lauke: {fmt(selectedCar.waited_sec)}
@@ -119,7 +119,7 @@ export default function SimulationLane({
           </span>
         ) : (
           <span style={{ color: "#1e293b", fontSize: 12 }}>
-            Paspauskite ant automobilio
+            Paspauskite ant automobilio noredami pamatyti laika
           </span>
         )}
       </div>

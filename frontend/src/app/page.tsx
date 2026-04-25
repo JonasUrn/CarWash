@@ -57,22 +57,6 @@ export default function Home() {
     >
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <div
-            style={{
-              color: "#2563eb",
-              fontWeight: 700,
-              fontSize: 11,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-            }}
-          >
-            AutoWash
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#f9fafb", marginTop: 2 }}>
-            Eiles simuliatorius
-          </h1>
-        </div>
         <div style={{ display: "flex", gap: 8 }}>
           {paused ? (
             <button
@@ -125,11 +109,6 @@ export default function Home() {
             }}
           >
             <QRCodeDisplay />
-            <p style={{ color: "#374151", fontSize: 11, textAlign: "center", lineHeight: 1.4 }}>
-              Nuskenuokite, kad prisijungtumete
-              <br />
-              prie eiles ir sekite savo automobili
-            </p>
           </div>
         </div>
 
@@ -153,7 +132,7 @@ export default function Home() {
                 marginBottom: 8,
               }}
             >
-              {paused ? "⏸ Eile sustabdyta" : "Gyva eile — automobiliai atvyksta is desines →"}
+              {paused ? "Eile sustabdyta" : "Eile juda"}
             </div>
             <SimulationLane
               queueCars={s?.queue_cars ?? []}
@@ -176,7 +155,7 @@ export default function Home() {
             {[
               {
                 label: "Laukia",
-                val: `${s?.queue_length ?? 0} aut.`,
+                val: `${s?.queue_length ?? 0} masinu`,
                 color:
                   (s?.queue_length ?? 0) > 4
                     ? "#ef4444"
