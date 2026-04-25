@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import ConfigPanel from "@/components/ConfigPanel";
 import SimulationLane from "@/components/SimulationLane";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 import StatsCard from "@/components/StatsCard";
@@ -34,41 +35,32 @@ export default function Home() {
     <main
       style={{
         minHeight: "100vh",
+        padding: "28px 24px",
+        maxWidth: 1100,
+        margin: "0 auto",
         display: "flex",
         flexDirection: "column",
-        padding: "32px 24px",
-        gap: 20,
-        maxWidth: 960,
-        margin: "0 auto",
+        gap: 18,
       }}
     >
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <div
             style={{
               color: "#2563eb",
               fontWeight: 700,
-              fontSize: 12,
+              fontSize: 11,
               letterSpacing: "0.22em",
               textTransform: "uppercase",
             }}
           >
             AutoWash
           </div>
-          <h1
-            style={{ fontSize: 26, fontWeight: 800, color: "#f9fafb", marginTop: 2 }}
-          >
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#f9fafb", marginTop: 2 }}>
             Queue Simulator
           </h1>
         </div>
-
         <button
           onClick={handleSpawn}
           disabled={spawning}
@@ -77,149 +69,162 @@ export default function Home() {
             color: "#fff",
             border: "none",
             borderRadius: 10,
-            padding: "11px 22px",
-            fontSize: 15,
+            padding: "10px 20px",
+            fontSize: 14,
             fontWeight: 600,
             cursor: spawning ? "default" : "pointer",
             transition: "background 0.15s",
-            letterSpacing: "0.01em",
           }}
         >
           + Spawn Car
         </button>
       </div>
 
-      {/* Simulation lane */}
+      {/* Two-column layout */}
       <div
         style={{
-          background: "#0d1117",
-          borderRadius: 16,
-          border: "1px solid #1f2937",
-          padding: "18px 16px 12px",
+          display: "grid",
+          gridTemplateColumns: "260px 1fr",
+          gap: 16,
+          alignItems: "start",
         }}
       >
-        <div
-          style={{
-            color: "#4b5563",
-            fontSize: 11,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            marginBottom: 10,
-          }}
-        >
-          Live Queue — cars enter from right →
-        </div>
-        <SimulationLane
-          queueCars={s?.queue_cars ?? []}
-          servingCar={s?.serving_car ?? null}
-        />
-      </div>
+        {/* Left: config + QR */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <ConfigPanel />
 
-      {/* Status bar */}
-      <div
-        style={{
-          display: "flex",
-          background: "#111827",
-          borderRadius: 12,
-          border: "1px solid #1f2937",
-          overflow: "hidden",
-        }}
-      >
-        {[
-          {
-            label: "Waiting",
-            value: `${s?.queue_length ?? 0} ${(s?.queue_length ?? 0) === 1 ? "car" : "cars"}`,
-            color:
-              (s?.queue_length ?? 0) > 4
-                ? "#ef4444"
-                : (s?.queue_length ?? 0) > 1
-                ? "#f59e0b"
-                : "#10b981",
-          },
-          {
-            label: "Bay",
-            value: s?.is_serving ? "Washing" : "Available",
-            color: s?.is_serving ? "#22c55e" : "#f59e0b",
-          },
-          {
-            label: "Served today",
-            value: `${s?.cars_served_total ?? 0}`,
-            color: "#f9fafb",
-          },
-        ].map((item, i) => (
           <div
-            key={i}
             style={{
-              flex: 1,
-              padding: "14px 20px",
-              borderRight: i < 2 ? "1px solid #1f2937" : undefined,
-              textAlign: "center",
+              background: "#0d1117",
+              borderRadius: 12,
+              border: "1px solid #1f2937",
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <QRCodeDisplay />
+            <p style={{ color: "#374151", fontSize: 11, textAlign: "center", lineHeight: 1.4 }}>
+              Scan to join queue
+              <br />
+              and track your car
+            </p>
+          </div>
+        </div>
+
+        {/* Right: simulation + stats */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Simulation lane */}
+          <div
+            style={{
+              background: "#0d1117",
+              borderRadius: 12,
+              border: "1px solid #1f2937",
+              padding: "14px 14px 10px",
             }}
           >
             <div
               style={{
-                color: "#6b7280",
+                color: "#374151",
                 fontSize: 10,
                 textTransform: "uppercase",
-                letterSpacing: "0.12em",
+                letterSpacing: "0.1em",
+                marginBottom: 8,
               }}
             >
-              {item.label}
+              Live Queue — cars enter from right →
             </div>
-            <div
-              style={{ color: item.color, fontSize: 20, fontWeight: 700, marginTop: 3 }}
-            >
-              {item.value}
-            </div>
+            <SimulationLane
+              queueCars={s?.queue_cars ?? []}
+              servingCar={s?.serving_car ?? null}
+              remainingSec={s?.remaining_sec ?? 0}
+              avgServiceTimeSec={s?.avg_service_time_sec ?? 5}
+            />
           </div>
-        ))}
-      </div>
 
-      {/* Stats grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 10,
-        }}
-      >
-        <StatsCard label="Est. wait" value={s ? fmt(s.estimated_wait_sec) : "—"} />
-        <StatsCard
-          label="Avg wash time"
-          value={s ? fmt(s.avg_service_time_sec) : "—"}
-        />
-        <StatsCard
-          label="Avg wait time"
-          value={s ? fmt(s.avg_wait_time_sec) : "—"}
-        />
-        <StatsCard
-          label="Utilization"
-          value={s ? `${Math.round(s.utilization * 100)}` : "—"}
-          unit="%"
-        />
-      </div>
-
-      {/* QR section */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 24,
-          background: "#111827",
-          border: "1px solid #1f2937",
-          borderRadius: 16,
-          padding: "20px 24px",
-        }}
-      >
-        <QRCodeDisplay />
-        <div>
-          <div style={{ color: "#f9fafb", fontWeight: 600, fontSize: 15 }}>
-            Queue Status QR
+          {/* Status bar */}
+          <div
+            style={{
+              display: "flex",
+              background: "#0d1117",
+              borderRadius: 10,
+              border: "1px solid #1f2937",
+              overflow: "hidden",
+            }}
+          >
+            {[
+              {
+                label: "Waiting",
+                val: `${s?.queue_length ?? 0} cars`,
+                color:
+                  (s?.queue_length ?? 0) > 4
+                    ? "#ef4444"
+                    : (s?.queue_length ?? 0) > 1
+                    ? "#f59e0b"
+                    : "#10b981",
+              },
+              {
+                label: "Bay",
+                val: s?.is_serving ? "Washing" : "Available",
+                color: s?.is_serving ? "#22c55e" : "#f59e0b",
+              },
+              {
+                label: "Served",
+                val: `${s?.cars_served_total ?? 0}`,
+                color: "#f9fafb",
+              },
+              {
+                label: "Throughput",
+                val: s ? `${s.throughput_per_hour}/hr` : "—",
+                color: "#94a3b8",
+              },
+            ].map((item, i, arr) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  padding: "12px 14px",
+                  borderRight: i < arr.length - 1 ? "1px solid #1f2937" : undefined,
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    color: "#374151",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  {item.label}
+                </div>
+                <div
+                  style={{ color: item.color, fontSize: 18, fontWeight: 700, marginTop: 2 }}
+                >
+                  {item.val}
+                </div>
+              </div>
+            ))}
           </div>
-          <div style={{ color: "#6b7280", fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
-            Scan with your phone to check queue position,
-            <br />
-            estimated wait time, and live stats.
+
+          {/* Stats grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              gap: 10,
+            }}
+          >
+            <StatsCard label="Est. next wait" value={s ? fmt(s.estimated_wait_sec) : "—"} />
+            <StatsCard label="Avg wash time" value={s ? fmt(s.avg_service_time_sec) : "—"} />
+            <StatsCard label="Avg queue wait" value={s ? fmt(s.avg_wait_time_sec) : "—"} />
+            <StatsCard
+              label="Utilization"
+              value={s ? `${Math.round(s.utilization * 100)}` : "—"}
+              unit="%"
+            />
           </div>
         </div>
       </div>
