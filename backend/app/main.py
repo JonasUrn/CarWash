@@ -6,14 +6,14 @@ from fastapi.responses import Response
 
 from app.models import QueueStats
 from app.qr_gen import make_qr_png
-from app.simulation import get_stats, start_simulation
+from app.simulation import get_stats, request_spawn, start_simulation
 
 app = FastAPI(title="CarWash Simulator")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -31,6 +31,12 @@ def health():
 @app.get("/api/stats", response_model=QueueStats)
 def stats():
     return get_stats()
+
+
+@app.post("/api/spawn")
+def spawn():
+    request_spawn()
+    return {"spawned": True}
 
 
 @app.get("/api/qr")
