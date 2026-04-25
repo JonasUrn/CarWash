@@ -12,12 +12,14 @@ _car_counter = 0
 _spawn_requests: deque = deque()
 _paused = threading.Event()
 _generation = 0
+_paused_sec: float = 0.0   # total accumulated pause duration (real seconds)
+_paused_at: float = 0.0    # real timestamp when current pause started; 0 if not paused
 
 
 @dataclass
 class Car:
     id: int
-    real_arrived: float
+    real_arrived: float   # virtual timestamp at arrival
 
 
 @dataclass
@@ -40,7 +42,7 @@ class SimConfig:
 class _State:
     queue: list = field(default_factory=list)
     serving_id: Optional[int] = None
-    service_started_at: float = 0.0
+    service_started_at: float = 0.0   # virtual timestamp
     current_service_dur: float = 0.0
     service_times: deque = field(default_factory=lambda: deque(maxlen=100))
     wait_times: deque = field(default_factory=lambda: deque(maxlen=100))
@@ -53,6 +55,14 @@ class _State:
 _state = _State()
 _config = SimConfig()
 _config_lock = threading.Lock()
+
+
+def _vt() -> float:
+    """Virtual timestamp: real time minus all paused duration."""
+    total_paused = _paused_sec
+    if _paused_at > 0:
+        total_paused += time.time() - _paused_at
+    return time.time() - total_paused
 
 
 def get_config() -> SimConfig:
@@ -118,7 +128,7 @@ def _arrivals(env: simpy.Environment, resource: simpy.Resource, gen: int):
 def _serve(env: simpy.Environment, resource: simpy.Resource, car_id: int, gen: int):
     if gen != _generation:
         return
-    car = Car(id=car_id, real_arrived=time.time())
+    car = Car(id=car_id, real_arrived=_vt())
     with _state.lock:
         if gen != _generation:
             return
@@ -129,15 +139,25 @@ def _serve(env: simpy.Environment, resource: simpy.Resource, car_id: int, gen: i
             with _state.lock:
                 _state.queue = [c for c in _state.queue if c.id != car.id]
             return
-        wait = time.time() - car.real_arrived
+        wait = _vt() - car.real_arrived
         duration = _sample_svc()
         with _state.lock:
             _state.queue = [c for c in _state.queue if c.id != car.id]
             _state.wait_times.append(wait)
             _state.serving_id = car.id
-            _state.service_started_at = time.time()
+            _state.service_started_at = _vt()
             _state.current_service_dur = duration
-        yield env.timeout(duration)
+        # Service loop: only advances virtual elapsed when not paused
+        elapsed = 0.0
+        while elapsed < duration:
+            yield env.timeout(0.1)
+            if gen != _generation:
+                with _state.lock:
+                    _state.serving_id = None
+                    _state.service_started_at = 0.0
+                return
+            if not _paused.is_set():
+                elapsed += 0.1
         with _state.lock:
             _state.service_times.append(duration)
             _state.busy_sec += duration
@@ -153,17 +173,25 @@ def request_spawn() -> int:
 
 
 def pause_simulation():
+    global _paused_at
+    _paused_at = time.time()
     _paused.set()
 
 
 def resume_simulation():
+    global _paused_sec, _paused_at
+    if _paused_at > 0:
+        _paused_sec += time.time() - _paused_at
+        _paused_at = 0.0
     _paused.clear()
 
 
 def reset_simulation():
-    global _car_counter, _state, _generation
+    global _car_counter, _state, _generation, _paused_sec, _paused_at
     _generation += 1
     _paused.clear()
+    _paused_sec = 0.0
+    _paused_at = 0.0
     _car_counter = 0
     _state = _State()
     _spawn_requests.clear()
@@ -192,13 +220,12 @@ def get_stats() -> dict:
         wait_times = list(_state.wait_times)
         cars = _state.cars_served
         busy = _state.busy_sec
-        elapsed = time.time() - _state.sim_start
+        sim_start = _state.sim_start
 
-    now = time.time()
-    with _config_lock:
-        default_svc = _config.mean_sec
+    now = _vt()
+    elapsed = now - sim_start
 
-    avg_svc = sum(svc_times) / len(svc_times) if svc_times else default_svc
+    avg_svc = sum(svc_times) / len(svc_times) if svc_times else 0.0
     avg_wait = sum(wait_times) / len(wait_times) if wait_times else 0.0
     utilization = min(1.0, busy / elapsed) if elapsed > 0 else 0.0
     throughput = cars / (elapsed / 3600) if elapsed > 0 else 0.0

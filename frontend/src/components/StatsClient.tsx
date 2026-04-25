@@ -199,42 +199,11 @@ export default function StatsClient() {
           />
         )}
         <StatsCard label="Apytiksl. laukimas" value={fmt(stats.estimated_wait_sec)} />
-        <StatsCard label="Vid. plovimo laikas" value={fmt(stats.avg_service_time_sec)} />
-        <StatsCard label="Vid. eiles laukimas" value={fmt(stats.avg_wait_time_sec)} />
+        <StatsCard label="Automobiliai eileje" value={`${stats.queue_length}`} />
         <StatsCard
-          label="Apkrovimas"
-          value={`${Math.round(stats.utilization * 100)}`}
-          unit="%"
+          label="Vid. plovimo laikas"
+          value={stats.avg_service_time_sec > 0 ? fmt(stats.avg_service_time_sec) : "—"}
         />
-        <StatsCard label="Pralaidumas" value={`${stats.throughput_per_hour}`} unit="/val." />
-        <StatsCard label="Aptarnauti automobiliai" value={`${stats.cars_served_total}`} />
-      </div>
-
-      {/* Bay pill */}
-      <div
-        style={{
-          marginTop: 16,
-          padding: "11px 16px",
-          background: "#0d1117",
-          borderRadius: 10,
-          border: "1px solid #1f2937",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: stats.is_serving ? "#22c55e" : "#f59e0b",
-            flexShrink: 0,
-          }}
-        />
-        <span style={{ color: "#6b7280", fontSize: 13 }}>
-          {stats.is_serving ? "Dabar plaunamas automobilis" : "Boksas laisvas"}
-        </span>
       </div>
     </main>
   );

@@ -237,13 +237,11 @@ export default function Home() {
             }}
           >
             <StatsCard label="Apytiksl. laukimas" value={s ? fmt(s.estimated_wait_sec) : "—"} />
-            <StatsCard label="Vid. plovimo laikas" value={s ? fmt(s.avg_service_time_sec) : "—"} />
-            <StatsCard label="Vid. eiles laukimas" value={s ? fmt(s.avg_wait_time_sec) : "—"} />
             <StatsCard
-              label="Apkrovimas"
-              value={s ? `${Math.round(s.utilization * 100)}` : "—"}
-              unit="%"
+              label="Vid. plovimo laikas"
+              value={s && s.avg_service_time_sec > 0 ? fmt(s.avg_service_time_sec) : "—"}
             />
+            <StatsCard label="Vid. eiles laukimas" value={s ? fmt(s.avg_wait_time_sec) : "—"} />
           </div>
         </div>
       </div>
