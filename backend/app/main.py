@@ -9,7 +9,7 @@ from app.models import JoinResponse, QueueStats, SimConfigIn, SimConfigOut
 from app.qr_gen import make_qr_png
 from app.simulation import get_config, get_stats, request_spawn, start_simulation, update_config
 
-app = FastAPI(title="CarWash Simulator")
+app = FastAPI(title="CarWash Simulator v2")
 
 app.add_middleware(
     CORSMiddleware,
