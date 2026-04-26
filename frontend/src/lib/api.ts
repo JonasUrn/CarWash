@@ -27,6 +27,7 @@ export interface QueueStats {
   cars_served_total: number;
   throughput_per_hour: number;
   paused: boolean;
+  manual_only: boolean;
 }
 
 export interface SimConfig {
@@ -72,7 +73,7 @@ export async function updateConfig(config: SimConfig): Promise<SimConfig> {
   return res.json();
 }
 
-export async function controlSimulation(action: "pause" | "resume" | "reset"): Promise<void> {
+export async function controlSimulation(action: "pause" | "resume" | "reset" | "manual_only" | "auto_spawn"): Promise<void> {
   await fetch(`${API}/api/control`, {
     method: "POST",
     headers: { ...BASE_HEADERS, "Content-Type": "application/json" },

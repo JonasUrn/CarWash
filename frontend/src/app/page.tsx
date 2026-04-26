@@ -33,9 +33,10 @@ export default function Home() {
   }, []);
 
   const paused = stats?.paused ?? false;
+  const manualOnly = stats?.manual_only ?? false;
 
   const handleControl = useCallback(
-    (action: "pause" | "resume" | "reset") => () => {
+    (action: "pause" | "resume" | "reset" | "manual_only" | "auto_spawn") => () => {
       controlSimulation(action).catch(() => {});
     },
     []
@@ -70,15 +71,30 @@ export default function Home() {
               onClick={handleControl("pause")}
               style={{ ...btnBase, background: "#1e3a8a", color: "#93c5fd" }}
             >
-              ⏸ Stabdyti
+              Stabdyti
             </button>
           )}
           <button
             onClick={handleControl("reset")}
             style={{ ...btnBase, background: "#1c1917", color: "#78716c", border: "1px solid #292524" }}
           >
-            ↺ Is naujo
+            Is naujo
           </button>
+          {manualOnly ? (
+            <button
+              onClick={handleControl("auto_spawn")}
+              style={{ ...btnBase, background: "#713f12", color: "#fde68a" }}
+            >
+              Leisti auto
+            </button>
+          ) : (
+            <button
+              onClick={handleControl("manual_only")}
+              style={{ ...btnBase, background: "#3b0764", color: "#e9d5ff" }}
+            >
+              🚫 Tik QR
+            </button>
+          )}
         </div>
       </div>
 
@@ -172,11 +188,6 @@ export default function Home() {
                 label: "Aptarnautas",
                 val: `${s?.cars_served_total ?? 0}`,
                 color: "#f9fafb",
-              },
-              {
-                label: "Pralaidumas",
-                val: s ? `${s.throughput_per_hour}/val.` : "—",
-                color: "#94a3b8",
               },
             ].map((item, i, arr) => (
               <div

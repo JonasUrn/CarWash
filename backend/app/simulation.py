@@ -14,6 +14,7 @@ _paused = threading.Event()
 _generation = 0
 _paused_sec: float = 0.0   # total accumulated pause duration (real seconds)
 _paused_at: float = 0.0    # real timestamp when current pause started; 0 if not paused
+_manual_only: bool = False  # when True, auto-spawning is disabled; manual /join still works
 
 
 @dataclass
@@ -118,7 +119,7 @@ def _arrivals(env: simpy.Environment, resource: simpy.Resource, gen: int):
             return
         while _spawn_requests:
             env.process(_serve(env, resource, _spawn_requests.popleft(), gen))
-        if not _paused.is_set():
+        if not _paused.is_set() and not _manual_only:
             remaining -= step
             if remaining <= 0:
                 env.process(_serve(env, resource, _next_id(), gen))
@@ -172,6 +173,15 @@ def request_spawn() -> int:
     return car_id
 
 
+def set_manual_only(enabled: bool) -> None:
+    global _manual_only
+    _manual_only = enabled
+
+
+def get_manual_only() -> bool:
+    return _manual_only
+
+
 def pause_simulation():
     global _paused_at
     _paused_at = time.time()
@@ -187,12 +197,13 @@ def resume_simulation():
 
 
 def reset_simulation():
-    global _car_counter, _state, _generation, _paused_sec, _paused_at
+    global _car_counter, _state, _generation, _paused_sec, _paused_at, _manual_only
     _generation += 1
     _paused.clear()
     _paused_sec = 0.0
     _paused_at = 0.0
     _car_counter = 0
+    _manual_only = False
     _state = _State()
     _spawn_requests.clear()
     start_simulation()
@@ -255,4 +266,5 @@ def get_stats() -> dict:
         "cars_served_total": cars,
         "throughput_per_hour": round(throughput, 1),
         "paused": _paused.is_set(),
+        "manual_only": _manual_only,
     }

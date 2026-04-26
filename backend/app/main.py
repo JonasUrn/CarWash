@@ -9,7 +9,7 @@ from app.models import ControlAction, JoinResponse, QueueStats, SimConfigIn, Sim
 from app.qr_gen import make_qr_png
 from app.simulation import (
     get_config, get_stats, pause_simulation, request_spawn,
-    reset_simulation, resume_simulation, start_simulation, update_config,
+    reset_simulation, resume_simulation, set_manual_only, start_simulation, update_config,
 )
 
 app = FastAPI(title="CarWash Simulator v2")
@@ -67,6 +67,10 @@ def control(body: ControlAction):
         resume_simulation()
     elif body.action == "reset":
         reset_simulation()
+    elif body.action == "manual_only":
+        set_manual_only(True)
+    elif body.action == "auto_spawn":
+        set_manual_only(False)
     return {"ok": True}
 
 

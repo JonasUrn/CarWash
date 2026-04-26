@@ -25,6 +25,7 @@ class QueueStats(BaseModel):
     cars_served_total: int
     throughput_per_hour: float
     paused: bool
+    manual_only: bool
 
 
 class SimConfigIn(BaseModel):
