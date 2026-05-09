@@ -14,7 +14,8 @@ export interface ServingCar {
   progress: number;
 }
 
-export interface QueueStats {
+export interface BoxStats {
+  box_id: number;
   queue_length: number;
   queue_cars: CarInfo[];
   is_serving: boolean;
@@ -25,9 +26,20 @@ export interface QueueStats {
   utilization: number;
   estimated_wait_sec: number;
   cars_served_total: number;
+}
+
+export interface QueueStats {
+  boxes: BoxStats[];
+  total_cars_served: number;
   throughput_per_hour: number;
+  sim_elapsed_sec: number;
   paused: boolean;
   manual_only: boolean;
+}
+
+export interface GraphStats {
+  wait_time_series: number[];
+  service_time_series: number[];
 }
 
 export interface SimConfig {
@@ -51,8 +63,19 @@ export async function fetchStats(): Promise<QueueStats> {
   return res.json();
 }
 
-export async function joinQueue(): Promise<{ car_id: number }> {
-  const res = await fetch(`${API}/api/join`, { method: "POST", headers: BASE_HEADERS });
+export async function fetchGraphStats(): Promise<GraphStats> {
+  const res = await fetch(`${API}/api/graph-stats`, { cache: "no-store", headers: BASE_HEADERS });
+  if (!res.ok) throw new Error("Failed to fetch graph stats");
+  return res.json();
+}
+
+export async function joinQueue(box_id?: number): Promise<{ car_id: number; box_id: number }> {
+  const res = await fetch(`${API}/api/join`, {
+    method: "POST",
+    headers: { ...BASE_HEADERS, "Content-Type": "application/json" },
+    body: JSON.stringify({ box_id: box_id ?? null }),
+  });
+  if (res.status === 409) throw Object.assign(new Error("queue_full"), { status: 409 });
   if (!res.ok) throw new Error("Failed to join queue");
   return res.json();
 }

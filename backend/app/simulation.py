@@ -9,12 +9,15 @@ import simpy
 import simpy.rt
 
 _car_counter = 0
-_spawn_requests: deque = deque()
+_spawn_requests: deque = deque()   # tuples of (car_id, box_id)
 _paused = threading.Event()
 _generation = 0
 _paused_sec: float = 0.0   # total accumulated pause duration (real seconds)
 _paused_at: float = 0.0    # real timestamp when current pause started; 0 if not paused
 _manual_only: bool = False  # when True, auto-spawning is disabled; manual /join still works
+
+QUEUE_LIMIT = 10
+NUM_BOXES = 2
 
 
 @dataclass
@@ -40,7 +43,7 @@ class SimConfig:
 
 
 @dataclass
-class _State:
+class _BoxState:
     queue: list = field(default_factory=list)
     serving_id: Optional[int] = None
     service_started_at: float = 0.0   # virtual timestamp
@@ -49,6 +52,13 @@ class _State:
     wait_times: deque = field(default_factory=lambda: deque(maxlen=100))
     cars_served: int = 0
     busy_sec: float = 0.0
+
+
+@dataclass
+class _State:
+    boxes: list = field(default_factory=lambda: [_BoxState(), _BoxState()])
+    wait_times_all: list = field(default_factory=list)    # unbounded, for convergence graph
+    service_times_all: list = field(default_factory=list)  # unbounded, for convergence graph
     sim_start: float = field(default_factory=time.time)
     lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -110,7 +120,7 @@ def _sample_iat() -> float:
     return random.expovariate(1 / m)
 
 
-def _arrivals(env: simpy.Environment, resource: simpy.Resource, gen: int):
+def _arrivals(env: simpy.Environment, resources: list, gen: int):
     remaining = _sample_iat()
     while gen == _generation:
         step = min(0.2, remaining)
@@ -118,59 +128,76 @@ def _arrivals(env: simpy.Environment, resource: simpy.Resource, gen: int):
         if gen != _generation:
             return
         while _spawn_requests:
-            env.process(_serve(env, resource, _spawn_requests.popleft(), gen))
+            car_id, box_id = _spawn_requests.popleft()
+            env.process(_serve(env, resources[box_id], box_id, car_id, gen))
         if not _paused.is_set() and not _manual_only:
             remaining -= step
             if remaining <= 0:
-                env.process(_serve(env, resource, _next_id(), gen))
+                with _state.lock:
+                    lens = [len(_state.boxes[i].queue) for i in range(NUM_BOXES)]
+                box_id = 0 if lens[0] <= lens[1] else 1
+                if lens[box_id] < QUEUE_LIMIT:
+                    env.process(_serve(env, resources[box_id], box_id, _next_id(), gen))
                 remaining = _sample_iat()
 
 
-def _serve(env: simpy.Environment, resource: simpy.Resource, car_id: int, gen: int):
+def _serve(env: simpy.Environment, resource: simpy.Resource, box_id: int, car_id: int, gen: int):
     if gen != _generation:
         return
     car = Car(id=car_id, real_arrived=_vt())
     with _state.lock:
         if gen != _generation:
             return
-        _state.queue.append(car)
+        _state.boxes[box_id].queue.append(car)
     with resource.request() as req:
         yield req
         if gen != _generation:
             with _state.lock:
-                _state.queue = [c for c in _state.queue if c.id != car.id]
+                box = _state.boxes[box_id]
+                box.queue = [c for c in box.queue if c.id != car.id]
             return
         wait = _vt() - car.real_arrived
         duration = _sample_svc()
         with _state.lock:
-            _state.queue = [c for c in _state.queue if c.id != car.id]
-            _state.wait_times.append(wait)
-            _state.serving_id = car.id
-            _state.service_started_at = _vt()
-            _state.current_service_dur = duration
-        # Service loop: only advances virtual elapsed when not paused
+            box = _state.boxes[box_id]
+            box.queue = [c for c in box.queue if c.id != car.id]
+            box.wait_times.append(wait)
+            box.serving_id = car.id
+            box.service_started_at = _vt()
+            box.current_service_dur = duration
+            _state.wait_times_all.append(wait)
         elapsed = 0.0
         while elapsed < duration:
             yield env.timeout(0.1)
             if gen != _generation:
                 with _state.lock:
-                    _state.serving_id = None
-                    _state.service_started_at = 0.0
+                    box = _state.boxes[box_id]
+                    box.serving_id = None
+                    box.service_started_at = 0.0
                 return
             if not _paused.is_set():
                 elapsed += 0.1
         with _state.lock:
-            _state.service_times.append(duration)
-            _state.busy_sec += duration
-            _state.cars_served += 1
-            _state.serving_id = None
-            _state.service_started_at = 0.0
+            box = _state.boxes[box_id]
+            box.service_times.append(duration)
+            box.busy_sec += duration
+            box.cars_served += 1
+            box.serving_id = None
+            box.service_started_at = 0.0
+            _state.service_times_all.append(duration)
 
 
-def request_spawn() -> int:
+def request_spawn(box_id: Optional[int] = None) -> Optional[tuple]:
+    """Returns (car_id, box_id) on success or None if the chosen box queue is full."""
+    with _state.lock:
+        if box_id is None:
+            lens = [len(_state.boxes[i].queue) for i in range(NUM_BOXES)]
+            box_id = 0 if lens[0] <= lens[1] else 1
+        if len(_state.boxes[box_id].queue) >= QUEUE_LIMIT:
+            return None
     car_id = _next_id()
-    _spawn_requests.append(car_id)
-    return car_id
+    _spawn_requests.append((car_id, box_id))
+    return (car_id, box_id)
 
 
 def set_manual_only(enabled: bool) -> None:
@@ -214,8 +241,8 @@ def start_simulation():
 
     def _run():
         env = simpy.rt.RealtimeEnvironment(factor=1.0, strict=False)
-        resource = simpy.Resource(env, capacity=1)
-        env.process(_arrivals(env, resource, gen))
+        resources = [simpy.Resource(env, capacity=1) for _ in range(NUM_BOXES)]
+        env.process(_arrivals(env, resources, gen))
         env.run()
 
     threading.Thread(target=_run, daemon=True).start()
@@ -223,48 +250,82 @@ def start_simulation():
 
 def get_stats() -> dict:
     with _state.lock:
-        queue_snap = list(_state.queue)
-        serving_id = _state.serving_id
-        svc_start = _state.service_started_at
-        cur_dur = _state.current_service_dur
-        svc_times = list(_state.service_times)
-        wait_times = list(_state.wait_times)
-        cars = _state.cars_served
-        busy = _state.busy_sec
+        now = _vt()
         sim_start = _state.sim_start
+        elapsed = now - sim_start
 
-    now = _vt()
-    elapsed = now - sim_start
+        boxes_data = []
+        total_cars = 0
 
-    avg_svc = sum(svc_times) / len(svc_times) if svc_times else 0.0
-    avg_wait = sum(wait_times) / len(wait_times) if wait_times else 0.0
-    utilization = min(1.0, busy / elapsed) if elapsed > 0 else 0.0
-    throughput = cars / (elapsed / 3600) if elapsed > 0 else 0.0
+        for box_id in range(NUM_BOXES):
+            box = _state.boxes[box_id]
+            queue_snap = list(box.queue)
+            serving_id = box.serving_id
+            svc_start = box.service_started_at
+            cur_dur = box.current_service_dur
+            svc_times = list(box.service_times)
+            wait_times = list(box.wait_times)
 
-    queue_cars = [
-        {"id": c.id, "waited_sec": round(now - c.real_arrived, 1)}
-        for c in queue_snap
-    ]
+            avg_svc = sum(svc_times) / len(svc_times) if svc_times else 0.0
+            avg_wait = sum(wait_times) / len(wait_times) if wait_times else 0.0
+            utilization = min(1.0, box.busy_sec / elapsed) if elapsed > 0 else 0.0
 
-    serving_car = None
-    remaining = 0.0
-    if serving_id is not None and svc_start > 0 and cur_dur > 0:
-        elapsed_svc = now - svc_start
-        remaining = max(0.0, cur_dur - elapsed_svc)
-        serving_car = {"id": serving_id, "progress": round(min(1.0, elapsed_svc / cur_dur), 3)}
+            queue_cars = [
+                {"id": c.id, "waited_sec": round(now - c.real_arrived, 1)}
+                for c in queue_snap
+            ]
+
+            serving_car = None
+            remaining = 0.0
+            if serving_id is not None and svc_start > 0 and cur_dur > 0:
+                elapsed_svc = now - svc_start
+                remaining = max(0.0, cur_dur - elapsed_svc)
+                serving_car = {
+                    "id": serving_id,
+                    "progress": round(min(1.0, elapsed_svc / cur_dur), 3),
+                }
+
+            boxes_data.append({
+                "box_id": box_id,
+                "queue_length": len(queue_snap),
+                "queue_cars": queue_cars,
+                "is_serving": serving_id is not None,
+                "serving_car": serving_car,
+                "remaining_sec": round(remaining, 1),
+                "avg_service_time_sec": round(avg_svc, 1),
+                "avg_wait_time_sec": round(avg_wait, 1),
+                "utilization": round(utilization, 3),
+                "estimated_wait_sec": round(len(queue_snap) * avg_svc + remaining, 1),
+                "cars_served_total": box.cars_served,
+            })
+            total_cars += box.cars_served
+
+    throughput = total_cars / (elapsed / 3600) if elapsed > 0 else 0.0
 
     return {
-        "queue_length": len(queue_snap),
-        "queue_cars": queue_cars,
-        "is_serving": serving_id is not None,
-        "serving_car": serving_car,
-        "remaining_sec": round(remaining, 1),
-        "avg_service_time_sec": round(avg_svc, 1),
-        "avg_wait_time_sec": round(avg_wait, 1),
-        "utilization": round(utilization, 3),
-        "estimated_wait_sec": round(len(queue_snap) * avg_svc + remaining, 1),
-        "cars_served_total": cars,
+        "boxes": boxes_data,
+        "total_cars_served": total_cars,
         "throughput_per_hour": round(throughput, 1),
+        "sim_elapsed_sec": round(elapsed, 1),
         "paused": _paused.is_set(),
         "manual_only": _manual_only,
+    }
+
+
+def get_graph_stats() -> dict:
+    with _state.lock:
+        wait_times = list(_state.wait_times_all)
+        service_times = list(_state.service_times_all)
+
+    def running_mean(times: list) -> list:
+        result = []
+        total = 0.0
+        for i, t in enumerate(times):
+            total += t
+            result.append(round(total / (i + 1), 2))
+        return result
+
+    return {
+        "wait_time_series": running_mean(wait_times),
+        "service_time_series": running_mean(service_times),
     }

@@ -16,6 +16,7 @@ export default function StatsClient() {
   const searchParams = useSearchParams();
   const rawId = searchParams.get("car_id");
   const carId = rawId ? parseInt(rawId, 10) : null;
+  const boxId = parseInt(searchParams.get("box_id") ?? "0", 10);
 
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [error, setError] = useState(false);
@@ -29,8 +30,9 @@ export default function StatsClient() {
           setStats(s);
           setError(false);
           if (carId) {
-            const inQueue = s.queue_cars.some((c) => c.id === carId);
-            const isServing = s.serving_car?.id === carId;
+            const box = s.boxes[boxId] ?? s.boxes[0];
+            const inQueue = box.queue_cars.some((c) => c.id === carId);
+            const isServing = box.serving_car?.id === carId;
             if (isServing) {
               phaseRef.current = "serving";
             } else if (!inQueue && phaseRef.current !== "queued") {
@@ -43,7 +45,7 @@ export default function StatsClient() {
     load();
     const id = setInterval(load, 1500);
     return () => clearInterval(id);
-  }, [carId]);
+  }, [carId, boxId]);
 
   if (error) {
     return (
@@ -77,16 +79,18 @@ export default function StatsClient() {
     );
   }
 
-  const myCarInQueue = carId ? stats.queue_cars.find((c) => c.id === carId) : null;
-  const myIdx = carId ? stats.queue_cars.findIndex((c) => c.id === carId) : -1;
+  const box = stats.boxes[boxId] ?? stats.boxes[0];
+
+  const myCarInQueue = carId ? box.queue_cars.find((c) => c.id === carId) : null;
+  const myIdx = carId ? box.queue_cars.findIndex((c) => c.id === carId) : -1;
   const myWait =
     myIdx >= 0
-      ? stats.remaining_sec + myIdx * stats.avg_service_time_sec
+      ? box.remaining_sec + myIdx * box.avg_service_time_sec
       : phase === "serving"
-      ? stats.remaining_sec
+      ? box.remaining_sec
       : null;
 
-  const genericPosition = stats.queue_length + (stats.is_serving ? 1 : 0);
+  const genericPosition = box.queue_length + (box.is_serving ? 1 : 0);
 
   return (
     <main
@@ -104,7 +108,7 @@ export default function StatsClient() {
             marginBottom: 4,
           }}
         >
-          AutoWash
+          AutoWash — Boksas {boxId + 1}
         </div>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "#f9fafb" }}>
           {carId ? "Jusu eiles busena" : "Eiles busena"}
@@ -147,7 +151,7 @@ export default function StatsClient() {
                 Jusu automobilis plaunamas
               </div>
               <div style={{ color: "#60a5fa", fontSize: 13, marginTop: 4 }}>
-                Liko: {fmt(stats.remaining_sec)}
+                Liko: {fmt(box.remaining_sec)}
               </div>
               <div
                 style={{
@@ -159,7 +163,7 @@ export default function StatsClient() {
               >
                 <div
                   style={{
-                    width: `${(stats.serving_car?.progress ?? 0) * 100}%`,
+                    width: `${(box.serving_car?.progress ?? 0) * 100}%`,
                     height: "100%",
                     background: "#3b82f6",
                     borderRadius: 2,
@@ -198,11 +202,11 @@ export default function StatsClient() {
             highlight
           />
         )}
-        <StatsCard label="Apytiksl. laukimas" value={fmt(stats.estimated_wait_sec)} />
-        <StatsCard label="Automobiliai eileje" value={`${stats.queue_length}`} />
+        <StatsCard label="Apytiksl. laukimas" value={fmt(box.estimated_wait_sec)} />
+        <StatsCard label="Automobiliai eileje" value={`${box.queue_length}`} />
         <StatsCard
           label="Vid. plovimo laikas"
-          value={stats.avg_service_time_sec > 0 ? fmt(stats.avg_service_time_sec) : "—"}
+          value={box.avg_service_time_sec > 0 ? fmt(box.avg_service_time_sec) : "—"}
         />
       </div>
     </main>

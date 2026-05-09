@@ -9,20 +9,13 @@ function fmt(sec: number): string {
   return `${Math.floor(sec / 60)}m ${Math.round(sec % 60)}s`;
 }
 
-const btnBase: React.CSSProperties = {
-  border: "none",
-  borderRadius: 10,
-  padding: "14px 0",
-  fontSize: 15,
-  fontWeight: 700,
-  cursor: "pointer",
-  width: "100%",
-};
+const QUEUE_LIMIT = 10;
 
 export default function JoinPage() {
   const router = useRouter();
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [decided, setDecided] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const load = () => fetchStats().then(setStats).catch(() => {});
@@ -31,13 +24,20 @@ export default function JoinPage() {
     return () => clearInterval(id);
   }, []);
 
-  const handleJoin = async () => {
+  const handleJoin = async (boxId: number) => {
     if (decided) return;
+    setErrorMsg(null);
     setDecided(true);
     try {
-      const { car_id } = await joinQueue();
-      router.replace(`/stats?car_id=${car_id}`);
-    } catch {
+      const { car_id, box_id } = await joinQueue(boxId);
+      router.replace(`/stats?car_id=${car_id}&box_id=${box_id}`);
+    } catch (err: unknown) {
+      const status = (err as { status?: number }).status;
+      if (status === 409) {
+        setErrorMsg("Eilė pilna — pasirinkite kitą boksą.");
+      } else {
+        setErrorMsg("Klaida. Bandykite dar kartą.");
+      }
       setDecided(false);
     }
   };
@@ -48,7 +48,8 @@ export default function JoinPage() {
     router.replace("/stats");
   };
 
-  const s = stats;
+  const boxes = stats?.boxes ?? null;
+  const allFull = boxes ? boxes.every((b) => b.queue_length >= QUEUE_LIMIT) : false;
 
   return (
     <main
@@ -60,7 +61,7 @@ export default function JoinPage() {
         justifyContent: "center",
         gap: 20,
         padding: 24,
-        maxWidth: 360,
+        maxWidth: 400,
         margin: "0 auto",
       }}
     >
@@ -76,50 +77,149 @@ export default function JoinPage() {
         AutoWash
       </div>
 
-      {/* Queue stats */}
-      <div
-        style={{
-          width: "100%",
-          background: "#0d1117",
-          border: "1px solid #1f2937",
-          borderRadius: 12,
-          padding: "16px 18px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-        }}
-      >
-        {[
-          { label: "Laukia eilėje", val: s ? `${s.queue_length} mašin${s.queue_length === 1 ? "a" : "os"}` : "—" },
-          { label: "Apytiksl. laukimas", val: s ? fmt(s.estimated_wait_sec) : "—" },
-          { label: "Boksas", val: s?.is_serving ? "Plaunama" : "Laisvas" },
-        ].map(({ label, val }) => (
-          <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: "#6b7280", fontSize: 13 }}>{label}</span>
-            <span style={{ color: "#f9fafb", fontSize: 13, fontWeight: 600 }}>{val}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Buttons — hidden after decision */}
-      {!decided && (
-        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
-          <button
-            onClick={handleJoin}
-            style={{ ...btnBase, background: "#1d4ed8", color: "#fff" }}
-          >
-            Laukti eilėje
-          </button>
-          <button
-            onClick={handleLeave}
-            style={{ ...btnBase, background: "#1c1917", color: "#78716c", border: "1px solid #292524" }}
-          >
-            Išeiti
-          </button>
+      {/* All-full banner */}
+      {allFull && (
+        <div
+          style={{
+            width: "100%",
+            background: "#450a0a",
+            border: "1px solid #991b1b",
+            borderRadius: 10,
+            padding: "12px 16px",
+            textAlign: "center",
+            color: "#fca5a5",
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          Eilė per ilga — bandykite vėliau (10/10)
         </div>
       )}
 
-      {decided && (
+      {/* Error message */}
+      {errorMsg && (
+        <div
+          style={{
+            width: "100%",
+            background: "#450a0a",
+            border: "1px solid #991b1b",
+            borderRadius: 10,
+            padding: "10px 14px",
+            color: "#fca5a5",
+            fontSize: 13,
+          }}
+        >
+          {errorMsg}
+        </div>
+      )}
+
+      {/* Box cards */}
+      <div style={{ width: "100%", display: "flex", gap: 12 }}>
+        {[0, 1].map((boxId) => {
+          const box = boxes?.[boxId];
+          const full = (box?.queue_length ?? 0) >= QUEUE_LIMIT;
+          return (
+            <div
+              key={boxId}
+              style={{
+                flex: 1,
+                background: "#0d1117",
+                border: `1px solid ${full ? "#991b1b" : "#1f2937"}`,
+                borderRadius: 12,
+                padding: "16px 14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
+              <div
+                style={{
+                  color: "#6b7280",
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
+                  fontWeight: 600,
+                }}
+              >
+                Boksas {boxId + 1}
+              </div>
+
+              {full && (
+                <div
+                  style={{
+                    background: "#450a0a",
+                    color: "#fca5a5",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    borderRadius: 6,
+                    padding: "3px 8px",
+                    textAlign: "center",
+                  }}
+                >
+                  Eilė pilna
+                </div>
+              )}
+
+              {[
+                { label: "Laukia", val: box ? `${box.queue_length} / ${QUEUE_LIMIT}` : "—" },
+                { label: "Laukimas", val: box ? fmt(box.estimated_wait_sec) : "—" },
+                { label: "Boksas", val: box?.is_serving ? "Plaunama" : "Laisvas" },
+              ].map(({ label, val }) => (
+                <div
+                  key={label}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                >
+                  <span style={{ color: "#6b7280", fontSize: 12 }}>{label}</span>
+                  <span style={{ color: "#f9fafb", fontSize: 12, fontWeight: 600 }}>{val}</span>
+                </div>
+              ))}
+
+              {!decided && !allFull && (
+                <button
+                  onClick={() => handleJoin(boxId)}
+                  disabled={full}
+                  style={{
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "10px 0",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: full ? "not-allowed" : "pointer",
+                    width: "100%",
+                    marginTop: 4,
+                    background: full ? "#1c1917" : "#1d4ed8",
+                    color: full ? "#4b5563" : "#fff",
+                  }}
+                >
+                  {full ? "Pilna" : "Laukti čia"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Leave button */}
+      {!decided && (
+        <button
+          onClick={handleLeave}
+          style={{
+            border: "1px solid #292524",
+            borderRadius: 10,
+            padding: "12px 0",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: "pointer",
+            width: "100%",
+            background: "#1c1917",
+            color: "#78716c",
+          }}
+        >
+          Išeiti
+        </button>
+      )}
+
+      {decided && !errorMsg && (
         <p style={{ color: "#6b7280", fontSize: 14 }}>Palaukite...</p>
       )}
     </main>

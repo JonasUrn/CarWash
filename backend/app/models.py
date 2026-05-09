@@ -12,7 +12,8 @@ class ServingCar(BaseModel):
     progress: float
 
 
-class QueueStats(BaseModel):
+class BoxStats(BaseModel):
+    box_id: int
     queue_length: int
     queue_cars: list[CarInfo]
     is_serving: bool
@@ -23,9 +24,20 @@ class QueueStats(BaseModel):
     utilization: float
     estimated_wait_sec: float
     cars_served_total: int
+
+
+class QueueStats(BaseModel):
+    boxes: list[BoxStats]
+    total_cars_served: int
     throughput_per_hour: float
+    sim_elapsed_sec: float
     paused: bool
     manual_only: bool
+
+
+class GraphStats(BaseModel):
+    wait_time_series: list[float]
+    service_time_series: list[float]
 
 
 class SimConfigIn(BaseModel):
@@ -62,5 +74,10 @@ class ControlAction(BaseModel):
     action: str
 
 
+class JoinRequest(BaseModel):
+    box_id: Optional[int] = None
+
+
 class JoinResponse(BaseModel):
     car_id: int
+    box_id: int

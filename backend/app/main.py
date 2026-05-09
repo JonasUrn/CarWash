@@ -1,14 +1,17 @@
 import os
 from dataclasses import asdict
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from app.models import ControlAction, JoinResponse, QueueStats, SimConfigIn, SimConfigOut
+from app.models import (
+    ControlAction, GraphStats, JoinRequest, JoinResponse,
+    QueueStats, SimConfigIn, SimConfigOut,
+)
 from app.qr_gen import make_qr_png
 from app.simulation import (
-    get_config, get_stats, pause_simulation, request_spawn,
+    get_config, get_graph_stats, get_stats, pause_simulation, request_spawn,
     reset_simulation, resume_simulation, set_manual_only, start_simulation, update_config,
 )
 
@@ -37,15 +40,24 @@ def stats():
     return get_stats()
 
 
+@app.get("/api/graph-stats", response_model=GraphStats)
+def graph_stats():
+    return get_graph_stats()
+
+
 @app.post("/api/spawn")
 def spawn():
-    request_spawn()
-    return {"spawned": True}
+    result = request_spawn()
+    return {"spawned": result is not None}
 
 
 @app.post("/api/join", response_model=JoinResponse)
-def join():
-    return {"car_id": request_spawn()}
+def join(body: JoinRequest = JoinRequest()):
+    result = request_spawn(body.box_id)
+    if result is None:
+        raise HTTPException(status_code=409, detail="Eile pilna")
+    car_id, box_id = result
+    return {"car_id": car_id, "box_id": box_id}
 
 
 @app.get("/api/config", response_model=SimConfigOut)
