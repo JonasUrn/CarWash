@@ -38,8 +38,8 @@ function Graph({
     return (
       <div
         style={{
-          background: "#0d1117",
-          border: "1px solid #1f2937",
+          background: "#ffffff",
+          border: "1px solid #e5e7eb",
           borderRadius: 12,
           padding: "16px 20px",
           flex: 1,
@@ -48,7 +48,7 @@ function Graph({
         <div style={{ color: "#374151", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>
           {title}
         </div>
-        <div style={{ color: "#1f2937", fontSize: 13, textAlign: "center", paddingTop: 32 }}>
+        <div style={{ color: "#9ca3af", fontSize: 13, textAlign: "center", paddingTop: 32 }}>
           Laukiama duomenų...
         </div>
       </div>
@@ -64,8 +64,8 @@ function Graph({
   return (
     <div
       style={{
-        background: "#0d1117",
-        border: "1px solid #1f2937",
+        background: "#ffffff",
+        border: "1px solid #e5e7eb",
         borderRadius: 12,
         padding: "16px 20px 10px",
         flex: 1,
@@ -77,7 +77,7 @@ function Graph({
       </div>
       <ResponsiveContainer width="100%" height={180}>
         <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis
             dataKey="car"
             tick={{ fill: "#374151", fontSize: 10 }}
@@ -92,7 +92,7 @@ function Graph({
             tickFormatter={(v) => `${v.toFixed(1)}s`}
           />
           <Tooltip
-            contentStyle={{ background: "#0d1117", border: "1px solid #1f2937", borderRadius: 6 }}
+            contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 6 }}
             labelStyle={{ color: "#6b7280", fontSize: 11 }}
             itemStyle={{ color: color, fontSize: 12 }}
             formatter={(v) => [`${Number(v).toFixed(2)}s`, "Vidurkis"]}

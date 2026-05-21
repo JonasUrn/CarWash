@@ -77,35 +77,35 @@ export default function Home() {
           {paused ? (
             <button
               onClick={handleControl("resume")}
-              style={{ ...btnBase, background: "#065f46", color: "#6ee7b7" }}
+              style={{ ...btnBase, background: "#d1fae5", color: "#065f46" }}
             >
               ▶ Testi
             </button>
           ) : (
             <button
               onClick={handleControl("pause")}
-              style={{ ...btnBase, background: "#1e3a8a", color: "#93c5fd" }}
+              style={{ ...btnBase, background: "#dbeafe", color: "#1e40af" }}
             >
               Stabdyti
             </button>
           )}
           <button
             onClick={handleControl("reset")}
-            style={{ ...btnBase, background: "#1c1917", color: "#78716c", border: "1px solid #292524" }}
+            style={{ ...btnBase, background: "#f1f0ef", color: "#57534e", border: "1px solid #e5e7eb" }}
           >
             Is naujo
           </button>
           {manualOnly ? (
             <button
               onClick={handleControl("auto_spawn")}
-              style={{ ...btnBase, background: "#713f12", color: "#fde68a" }}
+              style={{ ...btnBase, background: "#fef3c7", color: "#92400e" }}
             >
               Leisti auto
             </button>
           ) : (
             <button
               onClick={handleControl("manual_only")}
-              style={{ ...btnBase, background: "#3b0764", color: "#e9d5ff" }}
+              style={{ ...btnBase, background: "#f3e8ff", color: "#6b21a8" }}
             >
               🚫 Tik QR
             </button>
@@ -128,9 +128,9 @@ export default function Home() {
           <ConfigPanel />
           <div
             style={{
-              background: "#0d1117",
+              background: "#ffffff",
               borderRadius: 12,
-              border: "1px solid #1f2937",
+              border: "1px solid #e5e7eb",
               padding: "14px 16px",
               display: "flex",
               flexDirection: "column",
@@ -147,9 +147,9 @@ export default function Home() {
           {/* Simulation lanes */}
           <div
             style={{
-              background: "#0d1117",
+              background: "#ffffff",
               borderRadius: 12,
-              border: "1px solid #1f2937",
+              border: "1px solid #e5e7eb",
               padding: "14px 14px 10px",
             }}
           >
@@ -171,9 +171,9 @@ export default function Home() {
           <div
             style={{
               display: "flex",
-              background: "#0d1117",
+              background: "#ffffff",
               borderRadius: 10,
-              border: "1px solid #1f2937",
+              border: "1px solid #e5e7eb",
               overflow: "hidden",
             }}
           >
@@ -183,7 +183,7 @@ export default function Home() {
                 style={{
                   flex: 1,
                   padding: "10px 12px",
-                  borderRight: "1px solid #1f2937",
+                  borderRight: "1px solid #e5e7eb",
                   textAlign: "center",
                 }}
               >
@@ -210,11 +210,11 @@ export default function Home() {
                 </div>
               </div>
             ))}
-            <div style={{ flex: 1, padding: "10px 12px", borderRight: "1px solid #1f2937", textAlign: "center" }}>
+            <div style={{ flex: 1, padding: "10px 12px", borderRight: "1px solid #e5e7eb", textAlign: "center" }}>
               <div style={{ color: "#374151", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em" }}>
                 Laukia iš viso
               </div>
-              <div style={{ color: "#f9fafb", fontSize: 15, fontWeight: 700, marginTop: 2 }}>
+              <div style={{ color: "#111827", fontSize: 15, fontWeight: 700, marginTop: 2 }}>
                 {totalWaiting}
               </div>
             </div>
@@ -222,7 +222,7 @@ export default function Home() {
               <div style={{ color: "#374151", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em" }}>
                 Aptarnautas
               </div>
-              <div style={{ color: "#f9fafb", fontSize: 15, fontWeight: 700, marginTop: 2 }}>
+              <div style={{ color: "#111827", fontSize: 15, fontWeight: 700, marginTop: 2 }}>
                 {totalServed}
               </div>
             </div>
@@ -234,8 +234,8 @@ export default function Home() {
               <div
                 key={box.box_id}
                 style={{
-                  background: "#0d1117",
-                  border: "1px solid #1f2937",
+                  background: "#ffffff",
+                  border: "1px solid #e5e7eb",
                   borderRadius: 10,
                   padding: "12px 14px",
                   display: "flex",
@@ -254,7 +254,7 @@ export default function Home() {
                 ].map(({ label, val }) => (
                   <div key={label} style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ color: "#4b5563", fontSize: 12 }}>{label}</span>
-                    <span style={{ color: "#f9fafb", fontSize: 12, fontWeight: 600 }}>{val}</span>
+                    <span style={{ color: "#111827", fontSize: 12, fontWeight: 600 }}>{val}</span>
                   </div>
                 ))}
               </div>

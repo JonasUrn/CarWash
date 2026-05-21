@@ -9,8 +9,8 @@ export default function StatsCard({ label, value, unit, highlight }: Props) {
   return (
     <div
       style={{
-        background: highlight ? "#1a3a6e" : "#111827",
-        border: `1px solid ${highlight ? "#2563eb" : "#1f2937"}`,
+        background: highlight ? "#eff6ff" : "#ffffff",
+        border: `1px solid ${highlight ? "#2563eb" : "#e5e7eb"}`,
         borderRadius: 12,
         padding: "20px 24px",
         display: "flex",
@@ -20,7 +20,7 @@ export default function StatsCard({ label, value, unit, highlight }: Props) {
     >
       <span
         style={{
-          color: "#9ca3af",
+          color: "#6b7280",
           fontSize: 13,
           textTransform: "uppercase",
           letterSpacing: "0.05em",
@@ -33,7 +33,7 @@ export default function StatsCard({ label, value, unit, highlight }: Props) {
           style={{
             fontSize: 32,
             fontWeight: 700,
-            color: highlight ? "#60a5fa" : "#f9fafb",
+            color: highlight ? "#2563eb" : "#111827",
           }}
         >
           {value}

@@ -82,12 +82,12 @@ export default function JoinPage() {
         <div
           style={{
             width: "100%",
-            background: "#450a0a",
-            border: "1px solid #991b1b",
+            background: "#fee2e2",
+            border: "1px solid #fca5a5",
             borderRadius: 10,
             padding: "12px 16px",
             textAlign: "center",
-            color: "#fca5a5",
+            color: "#991b1b",
             fontSize: 14,
             fontWeight: 600,
           }}
@@ -101,11 +101,11 @@ export default function JoinPage() {
         <div
           style={{
             width: "100%",
-            background: "#450a0a",
-            border: "1px solid #991b1b",
+            background: "#fee2e2",
+            border: "1px solid #fca5a5",
             borderRadius: 10,
             padding: "10px 14px",
-            color: "#fca5a5",
+            color: "#991b1b",
             fontSize: 13,
           }}
         >
@@ -123,8 +123,8 @@ export default function JoinPage() {
               key={boxId}
               style={{
                 flex: 1,
-                background: "#0d1117",
-                border: `1px solid ${full ? "#991b1b" : "#1f2937"}`,
+                background: "#ffffff",
+                border: `1px solid ${full ? "#fca5a5" : "#e5e7eb"}`,
                 borderRadius: 12,
                 padding: "16px 14px",
                 display: "flex",
@@ -147,8 +147,8 @@ export default function JoinPage() {
               {full && (
                 <div
                   style={{
-                    background: "#450a0a",
-                    color: "#fca5a5",
+                    background: "#fee2e2",
+                    color: "#991b1b",
                     fontSize: 11,
                     fontWeight: 700,
                     borderRadius: 6,
@@ -170,7 +170,7 @@ export default function JoinPage() {
                   style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
                 >
                   <span style={{ color: "#6b7280", fontSize: 12 }}>{label}</span>
-                  <span style={{ color: "#f9fafb", fontSize: 12, fontWeight: 600 }}>{val}</span>
+                  <span style={{ color: "#111827", fontSize: 12, fontWeight: 600 }}>{val}</span>
                 </div>
               ))}
 
@@ -187,8 +187,8 @@ export default function JoinPage() {
                     cursor: full ? "not-allowed" : "pointer",
                     width: "100%",
                     marginTop: 4,
-                    background: full ? "#1c1917" : "#1d4ed8",
-                    color: full ? "#4b5563" : "#fff",
+                    background: full ? "#f1f0ef" : "#1d4ed8",
+                    color: full ? "#9ca3af" : "#fff",
                   }}
                 >
                   {full ? "Pilna" : "Laukti čia"}
@@ -204,15 +204,15 @@ export default function JoinPage() {
         <button
           onClick={handleLeave}
           style={{
-            border: "1px solid #292524",
+            border: "1px solid #e5e7eb",
             borderRadius: 10,
             padding: "12px 0",
             fontSize: 14,
             fontWeight: 600,
             cursor: "pointer",
             width: "100%",
-            background: "#1c1917",
-            color: "#78716c",
+            background: "#f1f0ef",
+            color: "#57534e",
           }}
         >
           Išeiti

@@ -111,7 +111,7 @@ function SingleLane({ box, label, highlightCarId }: LaneProps) {
             </button>
           </>
         ) : (
-          <span style={{ color: "#1e293b", fontSize: 10 }}>
+          <span style={{ color: "#9ca3af", fontSize: 10 }}>
             Paspauskite automobili
           </span>
         )}
@@ -123,7 +123,7 @@ function SingleLane({ box, label, highlightCarId }: LaneProps) {
           <div
             style={{
               position: "absolute", bottom: 0, left: 0, right: 0,
-              height: 44, background: "#0a0f1a", borderTop: "2px dashed #1e293b",
+              height: 44, background: "#e8eaed", borderTop: "2px dashed #d1d5db",
             }}
           />
           {/* Lane markings */}
@@ -132,7 +132,7 @@ function SingleLane({ box, label, highlightCarId }: LaneProps) {
               key={i}
               style={{
                 position: "absolute", bottom: 20, left: BAY_W + 44 + i * 64,
-                width: 34, height: 2, background: "#1a2236",
+                width: 34, height: 2, background: "#d1d5db",
               }}
             />
           ))}
@@ -141,13 +141,13 @@ function SingleLane({ box, label, highlightCarId }: LaneProps) {
           <div
             style={{
               position: "absolute", left: 0, top: 0, width: BAY_W, height: LANE_H,
-              background: "#030712", borderRight: "2px solid #1a2236",
-              borderTop: "2px solid #1a2236", borderRadius: "8px 0 0 0",
+              background: "#dde1e6", borderRight: "2px solid #d1d5db",
+              borderTop: "2px solid #d1d5db", borderRadius: "8px 0 0 0",
               display: "flex", flexDirection: "column", alignItems: "center",
               justifyContent: "center", gap: 5,
             }}
           >
-            <span style={{ color: "#1e293b", fontSize: 8, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            <span style={{ color: "#9ca3af", fontSize: 8, letterSpacing: "0.12em", textTransform: "uppercase" }}>
               Plovykla
             </span>
             {serving_car ? (
@@ -155,7 +155,7 @@ function SingleLane({ box, label, highlightCarId }: LaneProps) {
                 <div onClick={() => setSelectedId(serving_car.id)} style={{ cursor: "pointer" }}>
                   <MiniCar color="#1e3a8a" highlight={selectedId === serving_car.id || highlightCarId === serving_car.id} />
                 </div>
-                <div style={{ width: 68, height: 3, background: "#1a2236", borderRadius: 2 }}>
+                <div style={{ width: 68, height: 3, background: "#d1d5db", borderRadius: 2 }}>
                   <div
                     style={{
                       width: `${serving_car.progress * 100}%`, height: "100%",
@@ -178,11 +178,11 @@ function SingleLane({ box, label, highlightCarId }: LaneProps) {
             ) : (
               <div
                 style={{
-                  width: 56, height: 24, border: "1px dashed #1a2236", borderRadius: 4,
+                  width: 56, height: 24, border: "1px dashed #d1d5db", borderRadius: 4,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
-                <span style={{ color: "#1a2236", fontSize: 9 }}>laisva</span>
+                <span style={{ color: "#9ca3af", fontSize: 9 }}>laisva</span>
               </div>
             )}
           </div>
@@ -226,7 +226,7 @@ function SingleLane({ box, label, highlightCarId }: LaneProps) {
             <div
               style={{
                 position: "absolute", left: BAY_W + 12 + visibleCars.length * (CAR_W + GAP) + 2,
-                bottom: 12, background: "#1e293b", border: "1px solid #334155",
+                bottom: 12, background: "#e5e7eb", border: "1px solid #d1d5db",
                 borderRadius: 6, padding: "3px 7px", color: "#64748b", fontSize: 10, fontWeight: 600,
               }}
             >
@@ -235,7 +235,7 @@ function SingleLane({ box, label, highlightCarId }: LaneProps) {
           )}
 
           {/* Entrance arrow */}
-          <div style={{ position: "absolute", right: 8, bottom: 16, color: "#1a2236", fontSize: 16 }}>
+          <div style={{ position: "absolute", right: 8, bottom: 16, color: "#9ca3af", fontSize: 16 }}>
             →
           </div>
         </div>

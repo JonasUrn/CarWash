@@ -18,17 +18,17 @@ export default function CarWashVisual({ isServing, queueLength }: Props) {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
       <svg viewBox="0 0 400 220" width="360" height="198">
         {/* Ground */}
-        <rect x="20" y="178" width="360" height="30" fill="#1f2937" rx="4" />
+        <rect x="20" y="178" width="360" height="30" fill="#d1d5db" rx="4" />
 
         {/* Lane guide lines */}
-        <rect x="40" y="178" width="320" height="3" fill="#374151" />
+        <rect x="40" y="178" width="320" height="3" fill="#9ca3af" />
 
         {/* Left pillar */}
-        <rect x="28" y="58" width="18" height="124" fill="#374151" rx="3" />
+        <rect x="28" y="58" width="18" height="124" fill="#9ca3af" rx="3" />
         {/* Right pillar */}
-        <rect x="354" y="58" width="18" height="124" fill="#374151" rx="3" />
+        <rect x="354" y="58" width="18" height="124" fill="#9ca3af" rx="3" />
         {/* Top beam */}
-        <rect x="28" y="52" width="344" height="18" fill="#374151" rx="3" />
+        <rect x="28" y="52" width="344" height="18" fill="#9ca3af" rx="3" />
 
         {/* Rotating brushes — only when serving */}
         {isServing && (

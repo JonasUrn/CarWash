@@ -58,7 +58,7 @@ export default function StatsClient() {
           padding: 24,
         }}
       >
-        <p style={{ color: "#9ca3af" }}>Nepavyko prisijungti prie plovyklos sistemos.</p>
+        <p style={{ color: "#6b7280" }}>Nepavyko prisijungti prie plovyklos sistemos.</p>
       </main>
     );
   }
@@ -110,7 +110,7 @@ export default function StatsClient() {
         >
           AutoWash — Boksas {boxId + 1}
         </div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#f9fafb" }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827" }}>
           {carId ? "Jusu eiles busena" : "Eiles busena"}
         </h1>
         <p style={{ color: "#4b5563", fontSize: 12, marginTop: 4 }}>
@@ -124,12 +124,12 @@ export default function StatsClient() {
           style={{
             background:
               phase === "done"
-                ? "#064e3b"
+                ? "#d1fae5"
                 : phase === "serving"
-                ? "#1e3a8a"
-                : "#111827",
+                ? "#dbeafe"
+                : "#ffffff",
             border: `1px solid ${
-              phase === "done" ? "#065f46" : phase === "serving" ? "#1d4ed8" : "#1f2937"
+              phase === "done" ? "#a7f3d0" : phase === "serving" ? "#93c5fd" : "#e5e7eb"
             }`,
             borderRadius: 14,
             padding: "18px 20px",
@@ -138,26 +138,26 @@ export default function StatsClient() {
         >
           {phase === "done" ? (
             <>
-              <div style={{ color: "#6ee7b7", fontWeight: 700, fontSize: 18 }}>
+              <div style={{ color: "#065f46", fontWeight: 700, fontSize: 18 }}>
                 Jusu automobilis svarus! 🎉
               </div>
-              <div style={{ color: "#34d399", fontSize: 13, marginTop: 4 }}>
+              <div style={{ color: "#059669", fontSize: 13, marginTop: 4 }}>
                 Plovimas baigtas!
               </div>
             </>
           ) : phase === "serving" ? (
             <>
-              <div style={{ color: "#93c5fd", fontWeight: 700, fontSize: 18 }}>
+              <div style={{ color: "#1e40af", fontWeight: 700, fontSize: 18 }}>
                 Jusu automobilis plaunamas
               </div>
-              <div style={{ color: "#60a5fa", fontSize: 13, marginTop: 4 }}>
+              <div style={{ color: "#2563eb", fontSize: 13, marginTop: 4 }}>
                 Liko: {fmt(box.remaining_sec)}
               </div>
               <div
                 style={{
                   marginTop: 10,
                   height: 4,
-                  background: "#1e3a8a",
+                  background: "#dbeafe",
                   borderRadius: 2,
                 }}
               >
@@ -174,11 +174,11 @@ export default function StatsClient() {
             </>
           ) : (
             <>
-              <div style={{ color: "#f9fafb", fontWeight: 700, fontSize: 18 }}>
+              <div style={{ color: "#111827", fontWeight: 700, fontSize: 18 }}>
                 {myIdx >= 0 ? `#${myIdx + 1} eileje` : "Laukiama..."}
               </div>
               {myWait !== null && (
-                <div style={{ color: "#9ca3af", fontSize: 13, marginTop: 4 }}>
+                <div style={{ color: "#6b7280", fontSize: 13, marginTop: 4 }}>
                   Apytiksl. laukimas: {fmt(myWait)}
                 </div>
               )}

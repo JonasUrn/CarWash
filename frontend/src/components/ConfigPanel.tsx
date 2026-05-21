@@ -34,10 +34,10 @@ function NumInput({
       style={{
         width: 72,
         padding: "5px 8px",
-        background: "#0f172a",
-        border: "1px solid #1e293b",
+        background: "#ffffff",
+        border: "1px solid #e5e7eb",
         borderRadius: 6,
-        color: "#f9fafb",
+        color: "#111827",
         fontSize: 13,
         outline: "none",
       }}
@@ -89,9 +89,9 @@ function DistButtons({
             padding: "4px 6px",
             borderRadius: 6,
             border: "1px solid",
-            borderColor: value === d.value ? "#2563eb" : "#1f2937",
-            background: value === d.value ? "#1e3a8a" : "transparent",
-            color: value === d.value ? "#93c5fd" : "#4b5563",
+            borderColor: value === d.value ? "#2563eb" : "#e5e7eb",
+            background: value === d.value ? "#dbeafe" : "transparent",
+            color: value === d.value ? "#1e40af" : "#4b5563",
             fontSize: 11,
             cursor: "pointer",
           }}
@@ -140,9 +140,9 @@ export default function ConfigPanel() {
   return (
     <div
       style={{
-        background: "#0d1117",
+        background: "#ffffff",
         borderRadius: 12,
-        border: "1px solid #1f2937",
+        border: "1px solid #e5e7eb",
         padding: "16px 18px",
       }}
     >
@@ -194,7 +194,7 @@ export default function ConfigPanel() {
       )}
 
       {/* Divider */}
-      <div style={{ borderTop: "1px solid #1f2937", margin: "10px 0" }} />
+      <div style={{ borderTop: "1px solid #e5e7eb", margin: "10px 0" }} />
 
       {/* Service section */}
       <SectionLabel>Aptarnavimas</SectionLabel>
@@ -237,9 +237,9 @@ export default function ConfigPanel() {
           marginTop: 8,
           width: "100%",
           padding: "9px",
-          background: saved ? "#064e3b" : "#1e3a8a",
-          color: saved ? "#6ee7b7" : "#93c5fd",
-          border: `1px solid ${saved ? "#065f46" : "#1d4ed8"}`,
+          background: saved ? "#d1fae5" : "#dbeafe",
+          color: saved ? "#065f46" : "#1e40af",
+          border: `1px solid ${saved ? "#a7f3d0" : "#93c5fd"}`,
           borderRadius: 8,
           fontSize: 13,
           fontWeight: 600,
